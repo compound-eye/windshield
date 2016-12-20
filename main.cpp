@@ -5,7 +5,6 @@
 
 #include <GL/glew.h>
 #include <GL/freeglut.h>
-#include <iostream>
 
 
 static VideoSource* cap = NULL;
@@ -26,9 +25,6 @@ static void Display() {
         while (view->imagesToDraw.size > 0) {
             ++dropped;
             displayData = view->imagesToDraw.Dequeue();
-        }
-        if (dropped > 3) {
-            std::cerr << "Display dropped " << dropped << " frames." << std::endl;
         }
 
         view->Draw(displayData, viewWidth, viewHeight);

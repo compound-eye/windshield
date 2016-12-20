@@ -1,11 +1,18 @@
 #include "Compute.h"
 #include "VideoSource.h"
 #include "View.h"
+#include <iostream>
 
 
 void Compute::BackgroundLoop() {
     while (! cap->imagesCaptured.quitting) {
-        view->imagesToDraw.Enqueue(cap->imagesCaptured.Dequeue());
+        cv::Mat image = cap->imagesCaptured.Dequeue();
+
+        if (view->imagesToDraw.size < view->imagesToDraw.Capacity()) {
+            view->imagesToDraw.Enqueue(image);
+        } else {
+	    //std::cerr << "Compute dropped frame." << std::endl;
+        }
     }
 }
 

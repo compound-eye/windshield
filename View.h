@@ -7,7 +7,7 @@
 
 class View {
 public:
-    Queue<cv::Mat,11> imagesToDraw;
+    Queue<cv::Mat,3> imagesToDraw;
 
     virtual ~View() {}
     virtual void Draw(const cv::Mat& m, int viewWidth, int viewHeight) const = 0;
