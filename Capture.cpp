@@ -4,10 +4,9 @@
 #include <time.h>
 
 
-static const int cameraWidth = 848, cameraHeight = 480;
-
-//static const int videoFileFPS = 60; // Set frame rate to 60 fps for ffmpeg.
-static const int videoFileFPS = -1; // Let GStreamer control its own frame rate.
+static const int cameraWidth = 160, cameraHeight = 120;
+static const float cameraFPS  = -1.;
+static const int videoFileFPS = -1;
 
 
 Capture::Capture(int device)
@@ -15,11 +14,21 @@ Capture::Capture(int device)
     , fps(-1)
     , canDropFrame(true)
 {
+#if 0
+    imageWidth  = cap.get(cv::CAP_PROP_FRAME_WIDTH);
+    imageHeight = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+    std::cerr << "camera: " << imageWidth << " x " << imageHeight << std::endl;
+#else
     imageWidth  = cameraWidth;
     imageHeight = cameraHeight;
 
     cap.set(cv::CAP_PROP_FRAME_WIDTH,  cameraWidth);
     cap.set(cv::CAP_PROP_FRAME_HEIGHT, cameraHeight);
+#endif
+
+    if (cameraFPS > 0) {
+        cap.set(cv::CAP_PROP_FPS, cameraFPS);
+    }
 }
 
 Capture::Capture(const char* filename)
