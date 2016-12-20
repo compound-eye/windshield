@@ -7,11 +7,11 @@ find_package(GLUT   REQUIRED)
 find_package(GLEW   REQUIRED)
 
 aux_source_directory(. SRC_LIST)
-cuda_add_executable(${PROJECT_NAME}
-                    ${SRC_LIST}
-                    queue.h
-                    VideoSource.h
-                    View.h)
+add_executable(${PROJECT_NAME}
+               ${SRC_LIST}
+               queue.h
+               VideoSource.h
+               View.h)
 
 target_link_libraries(${PROJECT_NAME}
                       pthread
