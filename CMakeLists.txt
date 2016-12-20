@@ -17,5 +17,5 @@ target_link_libraries(${PROJECT_NAME}
                       pthread
                       ${OpenCV_LIBS}
                       ${OPENGL_LIBRARIES}
-                      ${GLUT_LIBRARY}
+                      ${GLUT_glut_LIBRARY}
                       ${GLEW_LIBRARIES})
