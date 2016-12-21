@@ -12,7 +12,7 @@ static const int videoFileFPS = -1;
 Capture::Capture(int device)
     : cap(device)
     , fps(-1)
-    , canDropFrame(true)
+    , canDropFrame(false)
 {
 #if 0
     imageWidth  = cap.get(cv::CAP_PROP_FRAME_WIDTH);

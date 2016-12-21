@@ -1,16 +1,22 @@
 #ifndef VIEW_H
 #define VIEW_H
 
-#include "queue.h"
 #include <opencv2/core.hpp>
 
 
 class View {
 public:
-    Queue<cv::Mat,3> imagesToDraw;
+    virtual ~View();
+    virtual void Draw(const cv::Mat& image, int viewWidth, int viewHeight) const = 0;
 
-    virtual ~View() {}
-    virtual void Draw(const cv::Mat& m, int viewWidth, int viewHeight) const = 0;
+    void SwapImageToDraw(cv::Mat& image);
+
+protected:
+    View();
+
+private:
+    cv::Mat imageToDraw;
+    pthread_mutex_t imageMutex;
 };
 
 #endif // VIEW_H

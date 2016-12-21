@@ -6,13 +6,8 @@
 
 void Compute::BackgroundLoop() {
     while (! cap->imagesCaptured.quitting) {
-        cv::Mat image = cap->imagesCaptured.Dequeue();
-
-        if (view->imagesToDraw.size < view->imagesToDraw.Capacity()) {
-            view->imagesToDraw.Enqueue(image);
-        } else {
-	    //std::cerr << "Compute dropped frame." << std::endl;
-        }
+        cv::Mat image(cap->imagesCaptured.Dequeue());
+        view->SwapImageToDraw(image);
     }
 }
 

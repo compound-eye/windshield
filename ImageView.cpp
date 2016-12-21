@@ -19,7 +19,7 @@ ImageView::~ImageView() {
     glDeleteTextures(1, &tex);
 }
 
-void ImageView::Draw(const cv::Mat& m, int viewWidth, int viewHeight) const {
+void ImageView::Draw(const cv::Mat& image, int viewWidth, int viewHeight) const {
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);
@@ -36,7 +36,7 @@ void ImageView::Draw(const cv::Mat& m, int viewWidth, int viewHeight) const {
     glBindTexture(GL_TEXTURE_2D, tex);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m.cols, m.rows, GL_BGR, GL_UNSIGNED_BYTE, m.data);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image.cols, image.rows, GL_BGR, GL_UNSIGNED_BYTE, image.data);
 
     glBegin(GL_QUAD_STRIP);
     glTexCoord2f(0., 1.);  glVertex3f(-1., -1., 0.);

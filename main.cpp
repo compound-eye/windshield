@@ -19,15 +19,10 @@ static Timer timer;
 static GLsync rendering = 0;
 
 static void Display() {
-    if (view->imagesToDraw.size > 0) {
-        cv::Mat displayData = view->imagesToDraw.Dequeue();
-        int dropped = 0;
-        while (view->imagesToDraw.size > 0) {
-            ++dropped;
-            displayData = view->imagesToDraw.Dequeue();
-        }
-
-        view->Draw(displayData, viewWidth, viewHeight);
+    cv::Mat image;
+    view->SwapImageToDraw(image);
+    if (! image.empty()) {
+        view->Draw(image, viewWidth, viewHeight);
 
         glDeleteSync(rendering);
         rendering = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
