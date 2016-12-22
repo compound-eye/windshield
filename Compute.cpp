@@ -1,6 +1,5 @@
 #include "Compute.h"
 #include "VideoSource.h"
-#include "View.h"
 #include <iostream>
 #include <opencv2/imgproc.hpp>
 
@@ -29,12 +28,12 @@ void Compute::BackgroundLoop() {
 #endif
             cv::Canny(gray, gray, 100., 200.);
 
-            View::Data out(cap->imageWidth, cap->imageHeight);
+            OutputData out(cap->imageWidth, cap->imageHeight);
             cv::HoughLinesP(gray, out.lines, 2., 0.02, HoughThreshold, HoughMinLineLength, HoughMaxGap);
 
             static const int grayTo3Ch[] = {0,0, 0,1, 0,2};
             cv::mixChannels(&gray, 1, &out.image, 1, grayTo3Ch, countof(grayTo3Ch)/2);
-            view->SwapDataToDraw(out);
+            SwapOutputData(out);
         }
     }
 }
@@ -51,4 +50,21 @@ void Compute::Start() {
 void Compute::Stop() {
     cap->imagesCaptured.Quit();
     pthread_join(thread, NULL);
+}
+
+Compute::Compute(VideoSource* c): cap(c) {
+    pthread_mutex_init(&dataMutex, NULL);
+}
+
+Compute::~Compute() {
+    pthread_mutex_destroy(&dataMutex);
+}
+
+void Compute::SwapOutputData(OutputData& data) {
+    OutputData x = data;
+
+    pthread_mutex_lock(&dataMutex);
+    data = outputData;
+    outputData = x;
+    pthread_mutex_unlock(&dataMutex);
 }

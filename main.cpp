@@ -11,7 +11,7 @@ static VideoSource* cap = NULL;
 static Compute* compute = NULL;
 
 static int viewWidth, viewHeight;
-static View* view = NULL;
+static ImageView* view = NULL;
 
 static const int refreshRate = 30;
 static Timer timer;
@@ -19,8 +19,8 @@ static Timer timer;
 static GLsync rendering = 0;
 
 static void Display() {
-    View::Data data;
-    view->SwapDataToDraw(data);
+    OutputData data;
+    compute->SwapOutputData(data);
     if (! data.image.empty()) {
         view->Draw(data, viewWidth, viewHeight);
 
@@ -73,7 +73,7 @@ static void Init(int& argc, char**argv) {
     glewInit();
 
     view = new ImageView(cap->imageWidth, cap->imageHeight);
-    compute = new Compute(cap, view);
+    compute = new Compute(cap);
 
     cap->Start();
     compute->Start();

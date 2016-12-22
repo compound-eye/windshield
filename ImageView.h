@@ -1,16 +1,17 @@
 #ifndef IMAGEVIEW_H
 #define IMAGEVIEW_H
 
-#include "View.h"
 #include <GL/glew.h>
 
 
-class ImageView: public View {
+class OutputData;
+
+class ImageView {
 public:
     ImageView(int imageWidth, int imageHeight);
     ~ImageView();
 
-    void Draw(const Data& data, int viewWidth, int viewHeight) const;
+    void Draw(const OutputData& data, int viewWidth, int viewHeight) const;
 
 private:
     GLuint tex;

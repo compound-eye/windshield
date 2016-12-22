@@ -1,4 +1,5 @@
 #include "ImageView.h"
+#include "Compute.h"
 
 
 ImageView::ImageView(int imageWidth, int imageHeight) {
@@ -19,7 +20,7 @@ ImageView::~ImageView() {
     glDeleteTextures(1, &tex);
 }
 
-void ImageView::Draw(const Data& data, int viewWidth, int viewHeight) const {
+void ImageView::Draw(const OutputData& data, int viewWidth, int viewHeight) const {
     float w = data.image.cols, h = data.image.rows;
 
     glEnable(GL_TEXTURE_2D);
@@ -51,7 +52,7 @@ void ImageView::Draw(const Data& data, int viewWidth, int viewHeight) const {
 
     glColor3f(1., 0., 0.);
     glBegin(GL_LINES);
-    for (View::Lines::const_iterator l = data.lines.begin(); l != data.lines.end(); ++l) {
+    for (Lines::const_iterator l = data.lines.begin(); l != data.lines.end(); ++l) {
         const cv::Vec4i& line = *l;
         glVertex2i(line[0], line[1]);
         glVertex2i(line[2], line[3]);
