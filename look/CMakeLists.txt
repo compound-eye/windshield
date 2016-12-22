@@ -6,11 +6,15 @@ find_package(OpenGL REQUIRED)
 find_package(GLUT   REQUIRED)
 find_package(GLEW   REQUIRED)
 
+include_directories(../think)
+
 aux_source_directory(. SRC_LIST)
+aux_source_directory(../think SRC_LIST)
+
 add_executable(${PROJECT_NAME}
                ${SRC_LIST}
-               queue.h
-               VideoSource.h)
+               ../think/queue.h
+               ../think/VideoSource.h)
 
 target_link_libraries(${PROJECT_NAME}
                       pthread
