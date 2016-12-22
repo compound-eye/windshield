@@ -12,6 +12,10 @@ static int greenChannel = 1;
 static int blueChannel  = 0;
 
 void Compute::BackgroundLoop() {
+    const int    HoughThreshold = cap->imageWidth * cap->imageHeight / 6500;
+    const double HoughMinLineLength = cap->imageHeight / 4.;
+    const double HoughMaxGap = cap->imageHeight / 50.;
+
     cv::Mat gray(cap->imageHeight, cap->imageWidth, CV_8UC1);
 
     while (! cap->imagesCaptured.quitting) {
@@ -25,10 +29,12 @@ void Compute::BackgroundLoop() {
 #endif
             cv::Canny(gray, gray, 100., 200.);
 
-            cv::Mat out(cap->imageHeight, cap->imageWidth, CV_8UC3);
+            View::Data out(cap->imageWidth, cap->imageHeight);
+            cv::HoughLinesP(gray, out.lines, 2., 0.02, HoughThreshold, HoughMinLineLength, HoughMaxGap);
+
             static const int grayTo3Ch[] = {0,0, 0,1, 0,2};
-            cv::mixChannels(&gray, 1, &out, 1, grayTo3Ch, countof(grayTo3Ch)/2);
-            view->SwapImageToDraw(out);
+            cv::mixChannels(&gray, 1, &out.image, 1, grayTo3Ch, countof(grayTo3Ch)/2);
+            view->SwapDataToDraw(out);
         }
     }
 }

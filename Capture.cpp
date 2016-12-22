@@ -14,7 +14,7 @@ Capture::Capture(int device)
     , fps(-1)
     , canDropFrame(false)
 {
-#if 0
+#if 1
     imageWidth  = cap.get(cv::CAP_PROP_FRAME_WIDTH);
     imageHeight = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
     std::cerr << "camera: " << imageWidth << " x " << imageHeight << std::endl;

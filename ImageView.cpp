@@ -19,7 +19,9 @@ ImageView::~ImageView() {
     glDeleteTextures(1, &tex);
 }
 
-void ImageView::Draw(const cv::Mat& image, int viewWidth, int viewHeight) const {
+void ImageView::Draw(const Data& data, int viewWidth, int viewHeight) const {
+    float w = data.image.cols, h = data.image.rows;
+
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);
@@ -28,7 +30,7 @@ void ImageView::Draw(const cv::Mat& image, int viewWidth, int viewHeight) const 
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+    glOrtho(0., w, h, 0., -1.0, 1.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -36,14 +38,23 @@ void ImageView::Draw(const cv::Mat& image, int viewWidth, int viewHeight) const 
     glBindTexture(GL_TEXTURE_2D, tex);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image.cols, image.rows, GL_BGR, GL_UNSIGNED_BYTE, image.data);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_BGR, GL_UNSIGNED_BYTE, data.image.data);
 
     glBegin(GL_QUAD_STRIP);
-    glTexCoord2f(0., 1.);  glVertex3f(-1., -1., 0.);
-    glTexCoord2f(0., 0.);  glVertex3f(-1., +1., 0.);
-    glTexCoord2f(1., 1.);  glVertex3f(+1., -1., 0.);
-    glTexCoord2f(1., 0.);  glVertex3f(+1., +1., 0.);
+    glTexCoord2f(0., 1.);  glVertex2f(0, h);
+    glTexCoord2f(0., 0.);  glVertex2f(0, 0);
+    glTexCoord2f(1., 1.);  glVertex2f(w, h);
+    glTexCoord2f(1., 0.);  glVertex2f(w, 0);
     glEnd();
 
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    glColor3f(1., 0., 0.);
+    glBegin(GL_LINES);
+    for (View::Lines::const_iterator l = data.lines.begin(); l != data.lines.end(); ++l) {
+        const cv::Vec4i& line = *l;
+        glVertex2i(line[0], line[1]);
+        glVertex2i(line[2], line[3]);
+    }
+    glEnd();
 }

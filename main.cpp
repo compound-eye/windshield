@@ -19,10 +19,10 @@ static Timer timer;
 static GLsync rendering = 0;
 
 static void Display() {
-    cv::Mat image;
-    view->SwapImageToDraw(image);
-    if (! image.empty()) {
-        view->Draw(image, viewWidth, viewHeight);
+    View::Data data;
+    view->SwapDataToDraw(data);
+    if (! data.image.empty()) {
+        view->Draw(data, viewWidth, viewHeight);
 
         glDeleteSync(rendering);
         rendering = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);

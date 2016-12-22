@@ -10,7 +10,7 @@ public:
     ImageView(int imageWidth, int imageHeight);
     ~ImageView();
 
-    void Draw(const cv::Mat& image, int viewWidth, int viewHeight) const;
+    void Draw(const Data& data, int viewWidth, int viewHeight) const;
 
 private:
     GLuint tex;
