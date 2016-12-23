@@ -46,7 +46,12 @@ int main(int /*argc*/, char** /*argv*/) {
 
         InitPWMChannel(pwm, outLeftMotor);
         InitPWMChannel(pwm, outRightMotor);
+        InitPWMChannel(pwm, outTiltCamera);
+        InitPWMChannel(pwm, outPanCamera);
         rc.init();
+
+        pwm.set_duty_cycle(outPanCamera,  outNeutral);
+        pwm.set_duty_cycle(outTiltCamera, outNeutral);
 
         timer.Start();
         for (;;) {
