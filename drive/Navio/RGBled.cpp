@@ -31,7 +31,7 @@ bool RGBled::initialize() {
     return true;
 }
 
-void RGBled::setColor(Colors color)
+void RGBled::setColor(Colors::T color)
 {
     switch (color) {
     case Colors::Black: pinR->write(OFF); pinG->write(OFF); pinB->write(OFF); break;

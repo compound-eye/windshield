@@ -4,10 +4,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <cstdint>
 #include "gpio.h"
 
-enum class Colors {
+namespace Colors {
+  enum T {
     Black,
     Red,
     Green,
@@ -15,14 +15,16 @@ enum class Colors {
     Cyan,
     Magenta,
     Yellow,
-    White};
+    White
+  };
+}
 
 class RGBled {
 public:
     RGBled();
 
     bool initialize();
-    void setColor(Colors color);
+    void setColor(Colors::T color);
 
 private:
     Navio::Pin *pinR;
