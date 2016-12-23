@@ -55,7 +55,6 @@ int main(int /*argc*/, char** /*argv*/) {
 
         timer.Start();
         for (;;) {
-
             int steer = rc.read(inpRoll);
             float rightSteerScale = std::min(std::max(-1., 2. * (steer - rightRoll) / (inpCenter - inpCenterR - rightRoll) - 1.), 1.);
             float leftSteerScale  = std::min(std::max(-1., 2. * (steer - leftRoll)  / (inpCenter + inpCenterR - leftRoll ) - 1.), 1.);
@@ -65,9 +64,7 @@ int main(int /*argc*/, char** /*argv*/) {
             pwm.set_duty_cycle(outRightMotor, rightSteerScale * throttleScale * (outMax - outNeutral) + outNeutral);
 
             struct timespec sleep = {0, 1000 * timer.NextSleep(refreshRate, INT_MAX)};
-            if (sleep.tv_nsec > 0) {
-                nanosleep(&sleep, NULL);
-            }
+            nanosleep(&sleep, NULL);
         }
     }
     return 0;
