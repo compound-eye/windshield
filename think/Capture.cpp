@@ -4,7 +4,7 @@
 #include <time.h>
 
 
-static const int cameraWidth = 160, cameraHeight = 120;
+static const int cameraWidth = 320, cameraHeight = 240;
 static const float cameraFPS  = -1.;
 static const int videoFileFPS = -1;
 
@@ -14,16 +14,15 @@ Capture::Capture(int device)
     , fps(-1)
     , canDropFrame(false)
 {
-#if 1
+#if 0
+    imageWidth  = cameraWidth;
+    imageHeight = cameraHeight;
+    cap.set(cv::CAP_PROP_FRAME_WIDTH,  cameraWidth);
+    cap.set(cv::CAP_PROP_FRAME_HEIGHT, cameraHeight);
+#else
     imageWidth  = cap.get(cv::CAP_PROP_FRAME_WIDTH);
     imageHeight = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
     std::cerr << "camera: " << imageWidth << " x " << imageHeight << std::endl;
-#else
-    imageWidth  = cameraWidth;
-    imageHeight = cameraHeight;
-
-    cap.set(cv::CAP_PROP_FRAME_WIDTH,  cameraWidth);
-    cap.set(cv::CAP_PROP_FRAME_HEIGHT, cameraHeight);
 #endif
 
     if (cameraFPS > 0) {
