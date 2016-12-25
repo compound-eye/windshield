@@ -10,6 +10,7 @@ static int redChannel   = 2;
 static int greenChannel = 1;
 static int blueChannel  = 0;
 static int grayChannels = -1;
+static int hue          = -2;
 
 void Compute::BackgroundLoop() {
     const int    HoughThreshold = cap->imageWidth * cap->imageHeight / 6500;
@@ -21,7 +22,7 @@ void Compute::BackgroundLoop() {
     const double CannyThreshold1 =  50.;
     const double CannyThreshold2 = 100.;
     const double HoughTheta = 0.05;
-    const int colorChannels = redChannel;
+    const int colorChannels = hue;
 #else
     const double CannyThreshold1 = 100.;
     const double CannyThreshold2 = 200.;
@@ -29,7 +30,7 @@ void Compute::BackgroundLoop() {
     const int colorChannels = grayChannels;
 #endif
 
-    cv::Mat gray(cap->imageHeight, cap->imageWidth, CV_8UC1);
+    cv::Mat gray(cap->imageHeight, cap->imageWidth, CV_8UC1), whiteLines;
 
     while (! cap->imagesCaptured.quitting) {
         cv::Mat inp(cap->imagesCaptured.Dequeue());
@@ -37,15 +38,19 @@ void Compute::BackgroundLoop() {
 
             if (colorChannels == grayChannels) {
                 cv::cvtColor(inp, gray, cv::COLOR_BGR2GRAY);
+            } else if (colorChannels == hue) {
+                cv::cvtColor(inp, inp, cv::COLOR_BGR2HSV_FULL);
+                const int colorFromTo[] = {0,0};
+                cv::mixChannels(&inp, 1, &gray, 1, colorFromTo, countof(colorFromTo)/2);
             } else {
                 const int colorFromTo[] = {colorChannels,0};
                 cv::mixChannels(&inp, 1, &gray, 1, colorFromTo, countof(colorFromTo)/2);
             }
 
-            cv::Canny(gray, gray, CannyThreshold1, CannyThreshold2);
+            cv::Canny(gray, whiteLines, CannyThreshold1, CannyThreshold2);
 
             OutputData out(cap->imageWidth, cap->imageHeight);
-            cv::HoughLinesP(gray, out.lines, HoughRho, HoughTheta, HoughThreshold, HoughMinLineLength, HoughMaxGap);
+            cv::HoughLinesP(whiteLines, out.lines, HoughRho, HoughTheta, HoughThreshold, HoughMinLineLength, HoughMaxGap);
 
             static const int grayTo3Ch[] = {0,0, 0,1, 0,2};
             cv::mixChannels(&gray, 1, &out.image, 1, grayTo3Ch, countof(grayTo3Ch)/2);
