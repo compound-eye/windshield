@@ -10,7 +10,7 @@ static int redChannel   = 2;
 static int greenChannel = 1;
 static int blueChannel  = 0;
 static int grayChannels = -1;
-static int hue          = -2;
+static int blueHue      = -2;
 
 void Compute::BackgroundLoop() {
     const int    HoughThreshold = cap->imageWidth * cap->imageHeight / 6500;
@@ -22,7 +22,7 @@ void Compute::BackgroundLoop() {
     const double CannyThreshold1 =  50.;
     const double CannyThreshold2 = 100.;
     const double HoughTheta = 0.05;
-    const int colorChannels = hue;
+    const int colorChannels = blueHue;
 #else
     const double CannyThreshold1 = 100.;
     const double CannyThreshold2 = 200.;
@@ -38,10 +38,9 @@ void Compute::BackgroundLoop() {
 
             if (colorChannels == grayChannels) {
                 cv::cvtColor(inp, gray, cv::COLOR_BGR2GRAY);
-            } else if (colorChannels == hue) {
+            } else if (colorChannels == blueHue) {
                 cv::cvtColor(inp, inp, cv::COLOR_BGR2HSV_FULL);
-                const int colorFromTo[] = {0,0};
-                cv::mixChannels(&inp, 1, &gray, 1, colorFromTo, countof(colorFromTo)/2);
+                cv::inRange(inp, cv::Scalar(175, 0, 0), cv::Scalar(245, 255, 255), gray);
             } else {
                 const int colorFromTo[] = {colorChannels,0};
                 cv::mixChannels(&inp, 1, &gray, 1, colorFromTo, countof(colorFromTo)/2);
