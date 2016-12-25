@@ -40,7 +40,7 @@ void Compute::BackgroundLoop() {
                 cv::cvtColor(inp, gray, cv::COLOR_BGR2GRAY);
             } else if (colorChannels == blueHue) {
                 cv::cvtColor(inp, inp, cv::COLOR_BGR2HSV_FULL);
-                cv::inRange(inp, cv::Scalar(175, 0, 0), cv::Scalar(245, 255, 255), gray);
+                cv::inRange(inp, cv::Scalar(124, 0, 0), cv::Scalar(174, 255, 255), gray);
             } else {
                 const int colorFromTo[] = {colorChannels,0};
                 cv::mixChannels(&inp, 1, &gray, 1, colorFromTo, countof(colorFromTo)/2);
