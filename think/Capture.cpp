@@ -14,7 +14,7 @@ Capture::Capture(int device)
     , fps(-1)
     , canDropFrame(false)
 {
-#if 0
+#if 1
     imageWidth  = cameraWidth;
     imageHeight = cameraHeight;
     cap.set(cv::CAP_PROP_FRAME_WIDTH,  cameraWidth);

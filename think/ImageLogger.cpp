@@ -10,9 +10,9 @@ void ImageLogger::BackgroundLoop() {
     time_t now = time(NULL);
     strftime(fname, sizeof fname, "/%F-%H%M%S", localtime(&now));
 
-    std::string pathLogDir = std::string(getenv("HOME")) + "/windshield-images";
-    mkdir(pathLogDir.c_str(), ACCESSPERMS);
-    pathLogDir += fname;
+    static const char* pathLogHomeDir = "/home/pi/rover-images";
+    mkdir(pathLogHomeDir, ACCESSPERMS);
+    std::string pathLogDir = std::string(pathLogHomeDir) + fname;
     mkdir(pathLogDir.c_str(), ACCESSPERMS);
 
     for (int i = 0; ! imagesToLog.quitting; ++i) {

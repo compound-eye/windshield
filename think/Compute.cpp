@@ -22,7 +22,7 @@ void Compute::BackgroundLoop() {
     const double HoughMaxGap = cap->imageHeight / 50.;
     const double HoughRho = 2.;
 
-#if 0
+#if 1
     const double CannyThreshold1 =  50.;
     const double CannyThreshold2 = 100.;
     const double HoughTheta = 0.05;
