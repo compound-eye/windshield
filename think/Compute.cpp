@@ -10,12 +10,11 @@ static int redChannel   = 2;
 static int greenChannel = 1;
 static int blueChannel  = 0;
 static int grayChannels = -1;
-static int blueHue      = -2;
 
-enum SegMethod {Hough, LSD, Contour};
+enum SegMethod {Hough, LSD, Contours};
 
 void Compute::BackgroundLoop() {
-    const SegMethod seg = LSD;
+    const SegMethod seg = Contours;
 
     const int    HoughThreshold = cap->imageWidth * cap->imageHeight / 6500;
     const double HoughMinLineLength = cap->imageHeight / 4.;
@@ -26,7 +25,7 @@ void Compute::BackgroundLoop() {
     const double CannyThreshold1 =  50.;
     const double CannyThreshold2 = 100.;
     const double HoughTheta = 0.05;
-    const int colorChannels = blueHue;
+    const int colorChannels = redChannel;
 #else
     const double CannyThreshold1 = 100.;
     const double CannyThreshold2 = 200.;
@@ -44,30 +43,41 @@ void Compute::BackgroundLoop() {
     while (! cap->imagesCaptured.quitting) {
         cv::Mat inp(cap->imagesCaptured.Dequeue());
         if (! inp.empty()) {
+            OutputData out(cap->imageWidth, cap->imageHeight);
 
-            if (colorChannels == grayChannels) {
-                cv::cvtColor(inp, gray, cv::COLOR_BGR2GRAY);
-            } else if (colorChannels == blueHue) {
+            if (seg == Contours) {
+                out.image = inp.clone();
+
                 cv::cvtColor(inp, inp, cv::COLOR_BGR2HSV_FULL);
                 cv::inRange(inp, cv::Scalar(124, 50, 50), cv::Scalar(174, 255, 255), gray);
-                if (seg == Hough) {
-                    cv::GaussianBlur(gray, gray, cv::Size(5.,5.), 50.);
+
+                typedef std::vector<std::vector<cv::Point> > ContoursT;
+                ContoursT contours;
+                cv::findContours(gray, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+                for (ContoursT::iterator i = contours.begin(); i != contours.end(); ++i) {
+                    cv::approxPolyDP(*i, *i, 5., true);
                 }
-            } else {
-                const int colorFromTo[] = {colorChannels,0};
-                cv::mixChannels(&inp, 1, &gray, 1, colorFromTo, countof(colorFromTo)/2);
+                cv::drawContours(out.image, contours, -1, cv::Scalar(0,0,255));
+            }
+            else {
+                if (colorChannels == grayChannels) {
+                    cv::cvtColor(inp, gray, cv::COLOR_BGR2GRAY);
+                } else {
+                    const int colorFromTo[] = {colorChannels,0};
+                    cv::mixChannels(&inp, 1, &gray, 1, colorFromTo, countof(colorFromTo)/2);
+                }
+
+                if (seg == LSD) {
+                    lsd->detect(gray, out.lines);
+                } else if (seg == Hough) {
+                    cv::Canny(gray, whiteLines, CannyThreshold1, CannyThreshold2);
+                    cv::HoughLinesP(whiteLines, out.lines, HoughRho, HoughTheta, HoughThreshold, HoughMinLineLength, HoughMaxGap);
+                }
+
+                static const int grayTo3Ch[] = {0,0, 0,1, 0,2};
+                cv::mixChannels(&gray, 1, &out.image, 1, grayTo3Ch, countof(grayTo3Ch)/2);
             }
 
-            OutputData out(cap->imageWidth, cap->imageHeight);
-            if (seg == LSD) {
-                lsd->detect(gray, out.lines);
-            } else if (seg == Hough) {
-                cv::Canny(gray, whiteLines, CannyThreshold1, CannyThreshold2);
-                cv::HoughLinesP(whiteLines, out.lines, HoughRho, HoughTheta, HoughThreshold, HoughMinLineLength, HoughMaxGap);
-            }
-
-            static const int grayTo3Ch[] = {0,0, 0,1, 0,2};
-            cv::mixChannels(&gray, 1, &out.image, 1, grayTo3Ch, countof(grayTo3Ch)/2);
             SwapOutputData(out);
         }
     }
