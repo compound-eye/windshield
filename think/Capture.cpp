@@ -6,7 +6,7 @@
 
 static const int cameraWidth = 320, cameraHeight = 240;
 static const float cameraFPS  = -1.;
-static const int videoFileFPS = -1;
+static const int videoFileFPS = 30;
 
 
 Capture::Capture(int device)
@@ -30,8 +30,8 @@ Capture::Capture(int device)
     }
 }
 
-Capture::Capture(const char* filename)
-    : cap(filename)
+Capture::Capture(const char* filename, int api)
+    : cap(filename, api)
     , fps(videoFileFPS)
     , canDropFrame(false)
 {

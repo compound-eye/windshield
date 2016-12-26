@@ -61,7 +61,9 @@ static void Cleanup() {
 }
 
 static void Init(int& argc, char**argv) {
-    cap = new Capture(0);
+    char fname[200];
+    sprintf(fname, "%s/rover-images/2016-12-26-040422/%%03d.png", getenv("HOME"));
+    cap = new Capture(fname, cv::CAP_IMAGES);
 
     viewWidth  = cap->imageWidth;
     viewHeight = cap->imageHeight;

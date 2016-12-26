@@ -8,7 +8,7 @@
 class Capture : public VideoSource {
 public:
     Capture(int device);
-    Capture(const char* filename);
+    Capture(const char* filename, int api);
 
     void Start();
     void Stop();
