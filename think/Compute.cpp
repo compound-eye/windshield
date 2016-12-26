@@ -41,6 +41,7 @@ void Compute::BackgroundLoop() {
             } else if (colorChannels == blueHue) {
                 cv::cvtColor(inp, inp, cv::COLOR_BGR2HSV_FULL);
                 cv::inRange(inp, cv::Scalar(124, 100, 80), cv::Scalar(174, 255, 255), gray);
+                cv::GaussianBlur(gray, gray, cv::Size(5.,5.), 0.);
             } else {
                 const int colorFromTo[] = {colorChannels,0};
                 cv::mixChannels(&inp, 1, &gray, 1, colorFromTo, countof(colorFromTo)/2);
@@ -52,7 +53,7 @@ void Compute::BackgroundLoop() {
             cv::HoughLinesP(whiteLines, out.lines, HoughRho, HoughTheta, HoughThreshold, HoughMinLineLength, HoughMaxGap);
 
             static const int grayTo3Ch[] = {0,0, 0,1, 0,2};
-            cv::mixChannels(&gray, 1, &out.image, 1, grayTo3Ch, countof(grayTo3Ch)/2);
+            cv::mixChannels(&whiteLines, 1, &out.image, 1, grayTo3Ch, countof(grayTo3Ch)/2);
             SwapOutputData(out);
         }
     }
