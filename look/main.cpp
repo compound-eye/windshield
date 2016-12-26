@@ -73,7 +73,7 @@ static void Init(int& argc, char**argv) {
     glewInit();
 
     view = new ImageView(cap->imageWidth, cap->imageHeight);
-    compute = new Compute(cap);
+    compute = new Compute(cap, NULL);
 
     cap->Start();
     compute->Start();

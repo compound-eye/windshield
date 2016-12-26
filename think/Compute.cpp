@@ -1,4 +1,5 @@
 #include "Compute.h"
+#include "ImageLogger.h"
 #include "VideoSource.h"
 #include <iostream>
 #include <opencv2/imgproc.hpp>
@@ -40,16 +41,18 @@ void Compute::BackgroundLoop() {
 
     cv::Mat gray(cap->imageHeight, cap->imageWidth, CV_8UC1), whiteLines;
 
-    while (! cap->imagesCaptured.quitting) {
+    for (int i = 0; ! cap->imagesCaptured.quitting; ++i) {
         cv::Mat inp(cap->imagesCaptured.Dequeue());
         if (! inp.empty()) {
+
+            if (log && i % 10 == 0 && log->imagesToLog.size < log->imagesToLog.Capacity()) {
+                log->imagesToLog.Enqueue(inp.clone());
+            }
+
             OutputData out(cap->imageWidth, cap->imageHeight);
-
             if (seg == Contours) {
-                out.image = inp.clone();
-
-                cv::cvtColor(inp, inp, cv::COLOR_BGR2HSV_FULL);
-                cv::inRange(inp, cv::Scalar(124, 50, 50), cv::Scalar(174, 255, 255), gray);
+                cv::cvtColor(inp, whiteLines, cv::COLOR_BGR2HSV_FULL);
+                cv::inRange(whiteLines, cv::Scalar(124, 50, 50), cv::Scalar(174, 255, 255), gray);
 
                 typedef std::vector<std::vector<cv::Point> > ContoursT;
                 ContoursT contours;
@@ -57,6 +60,8 @@ void Compute::BackgroundLoop() {
                 for (ContoursT::iterator i = contours.begin(); i != contours.end(); ++i) {
                     cv::approxPolyDP(*i, *i, 5., true);
                 }
+
+                out.image = inp;
                 cv::drawContours(out.image, contours, -1, cv::Scalar(0,0,255));
             }
             else {
@@ -77,7 +82,6 @@ void Compute::BackgroundLoop() {
                 static const int grayTo3Ch[] = {0,0, 0,1, 0,2};
                 cv::mixChannels(&gray, 1, &out.image, 1, grayTo3Ch, countof(grayTo3Ch)/2);
             }
-
             SwapOutputData(out);
         }
     }
@@ -97,7 +101,7 @@ void Compute::Stop() {
     pthread_join(thread, NULL);
 }
 
-Compute::Compute(VideoSource* c): cap(c) {
+Compute::Compute(VideoSource* c, ImageLogger* lg): cap(c), log(lg) {
     pthread_mutex_init(&dataMutex, NULL);
 }
 

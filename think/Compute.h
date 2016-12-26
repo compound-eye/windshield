@@ -2,8 +2,8 @@
 #define COMPUTE_H
 
 #include <opencv2/core.hpp>
-#include <pthread.h>
 
+class ImageLogger;
 class VideoSource;
 
 
@@ -18,7 +18,7 @@ struct OutputData {
 
 class Compute {
 public:
-    Compute(VideoSource* c);
+    Compute(VideoSource* c, ImageLogger* lg);
     ~Compute();
 
     void Start();
@@ -29,6 +29,7 @@ public:
 
 private:
     VideoSource* cap;
+    ImageLogger* log;
     OutputData outputData;
     pthread_mutex_t dataMutex;
     pthread_t thread;

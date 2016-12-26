@@ -1,8 +1,13 @@
+#include "Capture.h"
+#include "Compute.h"
+#include "ImageLogger.h"
 #include "Timer.h"
+
 #include "Navio/PWM.h"
 #include "Navio/RCInput.h"
 #include "Navio/RGBled.h"
 #include "Navio/Util.h"
+
 #include <algorithm>
 #include <limits.h>
 #include <stdlib.h>
@@ -39,6 +44,13 @@ static void InitPWMChannel(PWM& pwm, int ch) {
 int main(int /*argc*/, char** /*argv*/) {
     if (! check_apm()) {
         system("sudo modprobe bcm2835-v4l2");
+
+        Capture* cap = new Capture(0);
+        ImageLogger* log = new ImageLogger();
+        Compute* compute = new Compute(cap, log);
+        cap->Start();
+        log->Start();
+        compute->Start();
 
         PWM pwm;
         RCInput rc;
