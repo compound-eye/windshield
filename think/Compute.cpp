@@ -12,7 +12,11 @@ static int blueChannel  = 0;
 static int grayChannels = -1;
 static int blueHue      = -2;
 
+enum SegMethod {Hough, LSD, Contour};
+
 void Compute::BackgroundLoop() {
+    const SegMethod seg = LSD;
+
     const int    HoughThreshold = cap->imageWidth * cap->imageHeight / 6500;
     const double HoughMinLineLength = cap->imageHeight / 4.;
     const double HoughMaxGap = cap->imageHeight / 50.;
@@ -29,6 +33,11 @@ void Compute::BackgroundLoop() {
     const double HoughTheta = 0.02;
     const int colorChannels = grayChannels;
 #endif
+
+    cv::Ptr<cv::LineSegmentDetector> lsd;
+    if (seg == LSD) {
+        lsd = cv::createLineSegmentDetector();
+    }
 
     cv::Mat gray(cap->imageHeight, cap->imageWidth, CV_8UC1), whiteLines;
 
@@ -47,13 +56,16 @@ void Compute::BackgroundLoop() {
                 cv::mixChannels(&inp, 1, &gray, 1, colorFromTo, countof(colorFromTo)/2);
             }
 
-            cv::Canny(gray, whiteLines, CannyThreshold1, CannyThreshold2);
-
             OutputData out(cap->imageWidth, cap->imageHeight);
-            cv::HoughLinesP(whiteLines, out.lines, HoughRho, HoughTheta, HoughThreshold, HoughMinLineLength, HoughMaxGap);
+            if (seg == LSD) {
+                lsd->detect(gray, out.lines);
+            } else if (seg == Hough) {
+                cv::Canny(gray, whiteLines, CannyThreshold1, CannyThreshold2);
+                cv::HoughLinesP(whiteLines, out.lines, HoughRho, HoughTheta, HoughThreshold, HoughMinLineLength, HoughMaxGap);
+            }
 
             static const int grayTo3Ch[] = {0,0, 0,1, 0,2};
-            cv::mixChannels(&whiteLines, 1, &out.image, 1, grayTo3Ch, countof(grayTo3Ch)/2);
+            cv::mixChannels(&gray, 1, &out.image, 1, grayTo3Ch, countof(grayTo3Ch)/2);
             SwapOutputData(out);
         }
     }
