@@ -63,7 +63,7 @@ int main(int /*argc*/, char** /*argv*/) {
         rc.init();
 
         pwm.set_duty_cycle(outPanCamera,  outNeutral);
-        pwm.set_duty_cycle(outTiltCamera, outNeutral);
+        pwm.set_duty_cycle(outTiltCamera, 1.);
 
         timer.Start();
         for (;;) {
