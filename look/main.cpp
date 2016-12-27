@@ -3,6 +3,7 @@
 #include "ImageView.h"
 #include "Timer.h"
 
+#include <dirent.h>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 
@@ -60,10 +61,29 @@ static void Cleanup() {
     glDeleteSync(rendering); rendering = 0;
 }
 
+static char* RoverImageFileName() {
+    char roverImagesDir[150];
+    sprintf(roverImagesDir, "%s/rover-images", getenv("HOME"));
+
+    struct dirent** dirs = NULL;
+    const int countDirs = scandir(roverImagesDir, &dirs, NULL, alphasort);
+    static char fname[200];
+    sprintf(fname, "%s/%s/%%03d.png", roverImagesDir, dirs[countDirs-1]->d_name);
+
+    for (int i = 0; i < countDirs; ++i) {
+        free(dirs[i]);
+    }
+    free(dirs);
+
+    return fname;
+}
+
 static void Init(int& argc, char**argv) {
-    char fname[200];
-    sprintf(fname, "%s/rover-images/2016-12-26-040422/%%03d.png", getenv("HOME"));
-    cap = new Capture(fname, cv::CAP_IMAGES);
+#if 1
+    cap = new Capture(RoverImageFileName(), cv::CAP_IMAGES);
+#else
+    cap = new Capture(0);
+#endif
 
     viewWidth  = cap->imageWidth;
     viewHeight = cap->imageHeight;
