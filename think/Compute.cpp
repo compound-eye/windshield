@@ -14,6 +14,11 @@ static int grayChannels = -1;
 
 enum SegMethod {Hough, LSD, Contours};
 
+
+typedef std::vector<cv::Point> Polygon;
+typedef std::vector<Polygon> ContoursT;
+
+
 void Compute::BackgroundLoop() {
     const SegMethod seg = Contours;
 
@@ -40,6 +45,7 @@ void Compute::BackgroundLoop() {
     }
 
     cv::Mat gray(cap->imageHeight, cap->imageWidth, CV_8UC1), whiteLines;
+    cv::Vec4f line;
 
     for (int i = 0; ! cap->imagesCaptured.quitting; ++i) {
         cv::Mat inp(cap->imagesCaptured.Dequeue());
@@ -50,19 +56,25 @@ void Compute::BackgroundLoop() {
             }
 
             OutputData out(cap->imageWidth, cap->imageHeight);
+
             if (seg == Contours) {
                 cv::cvtColor(inp, whiteLines, cv::COLOR_BGR2HSV_FULL);
                 cv::inRange(whiteLines, cv::Scalar(124, 50, 50), cv::Scalar(174, 255, 255), gray);
 
-                typedef std::vector<std::vector<cv::Point> > ContoursT;
                 ContoursT contours;
                 cv::findContours(gray, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-                for (ContoursT::iterator i = contours.begin(); i != contours.end(); ++i) {
-                    cv::approxPolyDP(*i, *i, 5., true);
+                for (ContoursT::iterator p = contours.begin(); p != contours.end(); ++p) {
+                    Polygon& poly = *p;
+                    //cv::approxPolyDP(poly, poly, 5., true);
+                    cv::fitLine(poly, line, cv::DIST_L2, 0., HoughRho, HoughTheta);
+                    cv::Point p1(-9999*line(0) + line(2), -9999*line(1) + line(3)),
+                              p2( 9999*line(0) + line(2),  9999*line(1) + line(3));
+                    cv::clipLine(cv::boundingRect(poly), p1, p2);
+                    out.lines.push_back(cv::Vec4i(p1.x, p1.y, p2.x, p2.y));
                 }
 
                 out.image = inp;
-                cv::drawContours(out.image, contours, -1, cv::Scalar(0,0,255));
+                cv::drawContours(out.image, contours, -1, cv::Scalar(0,255,0));
             }
             else {
                 if (colorChannels == grayChannels) {
@@ -82,6 +94,7 @@ void Compute::BackgroundLoop() {
                 static const int grayTo3Ch[] = {0,0, 0,1, 0,2};
                 cv::mixChannels(&gray, 1, &out.image, 1, grayTo3Ch, countof(grayTo3Ch)/2);
             }
+
             SwapOutputData(out);
         }
     }
