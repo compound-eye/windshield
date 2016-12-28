@@ -7,6 +7,7 @@
 #include "Radio.h"
 #include "Navio/Util.h"
 
+#include <iostream>
 #include <limits.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -55,6 +56,7 @@ int main(int /*argc*/, char** /*argv*/) {
                     rightMotor = throttle;
                 } else {
                     float steer = (M_PI_2 - atan2(data.hiY - data.loY, data.hiX - data.loX)) / 10.;
+                    std::cerr << "steer = " << steer << std::endl;
                     leftMotor  = steer > 0. ? (1. - steer) * throttle : throttle;
                     rightMotor = steer < 0. ? (1. + steer) * throttle : throttle;
                 }
