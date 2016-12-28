@@ -6,7 +6,7 @@
 
 static const int cameraWidth = 320, cameraHeight = 240;
 static const float cameraFPS  = -1.;
-static const int videoFileFPS = 30;
+static const int videoFileFPS = 15;
 
 
 Capture::Capture(int device)
