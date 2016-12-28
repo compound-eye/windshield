@@ -50,11 +50,11 @@ int main(int /*argc*/, char** /*argv*/) {
                 rightMotor = 0.;
             } else {
                 float throttle = rc.ReadThrottle();
-                float steer;
                 if (data.direction == GoStraight) {
-                    steer = 0.;
+                    leftMotor  = throttle;
+                    rightMotor = throttle;
                 } else {
-                    steer = (M_PI_2 - atan2(data.hiY - data.loY, data.hiX - data.loX)) / 10.;
+                    float steer = (M_PI_2 - atan2(data.hiY - data.loY, data.hiX - data.loX)) / 10.;
                     leftMotor  = steer > 0. ? (1. - steer) * throttle : throttle;
                     rightMotor = steer < 0. ? (1. + steer) * throttle : throttle;
                 }
