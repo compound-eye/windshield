@@ -36,6 +36,7 @@ int main(int /*argc*/, char** /*argv*/) {
         Motor motor;
         Radio rc;
         Timer timer;
+        float steer = 0;
 
         signal(SIGHUP, Quit);
         signal(SIGINT, Quit);
@@ -45,17 +46,22 @@ int main(int /*argc*/, char** /*argv*/) {
             OutputData data;
             compute.SwapOutputData(data);
 
+            float throttle = rc.ReadThrottle();
             float leftMotor, rightMotor;
             if (data.direction == GoBack) {
-                leftMotor  = 0.;
-                rightMotor = 0.;
+                if (steer > 0.) {
+                    leftMotor  = -throttle;
+                    rightMotor =  throttle;
+                } else {
+                    rightMotor = -throttle;
+                    leftMotor  =  throttle;
+                }
             } else {
-                float throttle = rc.ReadThrottle();
                 if (data.direction == GoStraight) {
                     leftMotor  = throttle;
                     rightMotor = throttle;
                 } else {
-                    float steer = (M_PI_2 - atan2(data.hiY - data.loY, data.hiX - data.loX)) / 10.;
+                    steer = (M_PI_2 - atan2(data.hiY - data.loY, data.hiX - data.loX)) / 10.;
                     std::cerr << "steer = " << steer << std::endl;
                     leftMotor  = steer > 0. ? (1. - steer) * throttle : throttle;
                     rightMotor = steer < 0. ? (1. + steer) * throttle : throttle;
