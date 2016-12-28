@@ -3,81 +3,62 @@
 #include "ImageLogger.h"
 #include "Timer.h"
 
-#include "Navio/PWM.h"
-#include "Navio/RCInput.h"
-#include "Navio/RGBled.h"
+#include "Motor.h"
+#include "Radio.h"
 #include "Navio/Util.h"
 
-#include <algorithm>
 #include <limits.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <time.h>
 
 
-static const int inpThrottle = 0,  minThrottle = 1120,  maxThrottle = 1880;
-static const int inpRoll     = 1,  rightRoll   = 1110,  leftRoll    = 1890;
-static const int inpPitch    = 2,  upPitch     = 1110,  downPitch   = 1890;
-static const int inpYaw      = 3,  rightYaw    = 1110,  leftYaw     = 1890;
+static volatile bool quit = false;
 
-static const int inpCenter  = 1500;
-static const int inpCenterR = 5;
-
-static const int outTiltCamera = 0;
-static const int outLeftMotor  = 1;
-static const int outRightMotor = 2;
-static const int outPanCamera  = 3;
-
-static const float outMin     = 1.;
-static const float outNeutral = 1.5;
-static const float outMax     = 2.;
-
+static void Quit(int) {
+    quit = true;
+}
 
 static const int refreshRate = 30;
-
-
-static void InitPWMChannel(PWM& pwm, int ch) {
-    pwm.init(ch);
-    pwm.enable(ch);
-    pwm.set_period(ch, 50);
-}
 
 int main(int /*argc*/, char** /*argv*/) {
     if (! check_apm()) {
         system("sudo modprobe bcm2835-v4l2");
 
-        Capture* cap = new Capture(0);
-        ImageLogger* log = new ImageLogger();
-        Compute* compute = new Compute(cap, log);
-        cap->Start();
-        log->Start();
-        compute->Start();
+        Capture cap(0);
+        ImageLogger log;
+        Compute compute(&cap, &log);
+        cap.Start();
+        log.Start();
+        compute.Start();
 
-        PWM pwm;
-        RCInput rc;
+        Motor motor;
+        Radio rc;
         Timer timer;
 
-        InitPWMChannel(pwm, outLeftMotor);
-        InitPWMChannel(pwm, outRightMotor);
-        InitPWMChannel(pwm, outTiltCamera);
-        InitPWMChannel(pwm, outPanCamera);
-        rc.init();
-
-        pwm.set_duty_cycle(outPanCamera,  outNeutral);
-        pwm.set_duty_cycle(outTiltCamera, 1.);
+        signal(SIGHUP, Quit);
+        signal(SIGINT, Quit);
 
         timer.Start();
-        for (;;) {
-            int steer = rc.read(inpRoll);
-            float rightSteerScale = std::min(std::max(-1., 2. * (steer - rightRoll) / (inpCenter - inpCenterR - rightRoll) - 1.), 1.);
-            float leftSteerScale  = std::min(std::max(-1., 2. * (steer - leftRoll)  / (inpCenter + inpCenterR - leftRoll ) - 1.), 1.);
-            float throttleScale = float(rc.read(inpThrottle) - minThrottle) / (maxThrottle - minThrottle);
+        while (! quit) {
+            float throttle = rc.ReadThrottle();
+            float steer = rc.ReadSteer();
 
-            pwm.set_duty_cycle(outLeftMotor,   leftSteerScale * throttleScale * (outMax - outNeutral) + outNeutral);
-            pwm.set_duty_cycle(outRightMotor, rightSteerScale * throttleScale * (outMax - outNeutral) + outNeutral);
+            float  leftMotor = steer > 0. ? (1. - 2.*steer) * throttle : throttle;
+            float rightMotor = steer < 0. ? (1. + 2.*steer) * throttle : throttle;
+            motor.SetLeftMotor (leftMotor);
+            motor.SetRightMotor(rightMotor);
 
             struct timespec sleep = {0, 1000 * timer.NextSleep(refreshRate, INT_MAX)};
             nanosleep(&sleep, NULL);
         }
+
+        motor.SetLeftMotor (0.);
+        motor.SetRightMotor(0.);
+
+        cap.Stop();
+        compute.Stop();
+        log.Stop();
     }
     return 0;
 }

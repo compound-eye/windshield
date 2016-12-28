@@ -12,10 +12,8 @@ add_executable(${PROJECT_NAME}
                ${SRC_LIST}
                ../think/queue.h
                ../think/VideoSource.h
-               Navio/gpio.cpp
                Navio/PWM.cpp
                Navio/RCInput.cpp
-               Navio/RGBled.cpp
                Navio/Util.cpp)
 
 target_link_libraries(${PROJECT_NAME}
