@@ -9,11 +9,19 @@ class VideoSource;
 
 typedef std::vector<cv::Vec4i> Lines;
 
+enum Direction {GoStraight, Turn, GoBack};
+
 struct OutputData {
+    Direction direction;
+    int loX, loY, hiX, hiY;
+
     cv::Mat image;
     Lines lines;
+
     OutputData() {}
     OutputData(int w, int h): image(h, w, CV_8UC3) {}
+
+    void UseLineForDirection(const cv::Vec4i& line);
 };
 
 class Compute {

@@ -15,9 +15,41 @@ static int grayChannels = -1;
 enum SegMethod {Hough, LSD, Contours};
 
 
+template<typename T>
+static inline T square(T x) {
+    return x * x;
+}
+
+template<typename T>
+static inline T length2(const cv::Vec<T,4>& v) {
+    return square(v(0) - v(2)) + square(v(1) - v(3));
+}
+
+static bool longer(const cv::Vec4i& v, const cv::Vec4i& w) {
+    return length2(v) > length2(w);
+}
+
+void OutputData::UseLineForDirection(const cv::Vec4i& line) {
+    if (line(1) < line(3)) {
+        loX = line(0);
+        loY = line(1);
+        hiX = line(2);
+        hiY = line(3);
+    } else {
+        hiX = line(0);
+        hiY = line(1);
+        loX = line(2);
+        loY = line(3);
+    }
+
+    const int mid = image.cols / 2;
+    direction = loY < image.rows/3 && (mid < loX && loX < hiX || mid > loX && loX > hiX)
+              ? Turn
+              : GoStraight;
+}
+
 typedef std::vector<cv::Point> Polygon;
 typedef std::vector<Polygon> ContoursT;
-
 
 void Compute::BackgroundLoop() {
     const SegMethod seg = Contours;
@@ -93,6 +125,14 @@ void Compute::BackgroundLoop() {
 
                 static const int grayTo3Ch[] = {0,0, 0,1, 0,2};
                 cv::mixChannels(&gray, 1, &out.image, 1, grayTo3Ch, countof(grayTo3Ch)/2);
+            }
+
+            std::sort(out.lines.begin(), out.lines.end(), longer);
+            out.direction = GoBack;
+            for (Lines::iterator l = out.lines.begin();
+                 out.direction != Turn && l != out.lines.end() && length2(*l) > square(cap->imageHeight/3);
+                 ++l) {
+                out.UseLineForDirection(*l);
             }
 
             SwapOutputData(out);

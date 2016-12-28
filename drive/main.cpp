@@ -41,11 +41,24 @@ int main(int /*argc*/, char** /*argv*/) {
 
         timer.Start();
         while (! quit) {
-            float throttle = rc.ReadThrottle();
-            float steer = rc.ReadSteer();
+            OutputData data;
+            compute.SwapOutputData(data);
 
-            float  leftMotor = steer > 0. ? (1. - 2.*steer) * throttle : throttle;
-            float rightMotor = steer < 0. ? (1. + 2.*steer) * throttle : throttle;
+            float leftMotor, rightMotor;
+            if (data.direction == GoBack) {
+                leftMotor  = 0.;
+                rightMotor = 0.;
+            } else {
+                float throttle = rc.ReadThrottle();
+                float steer;
+                if (data.direction == GoStraight) {
+                    steer = 0.;
+                } else {
+                    steer = (M_PI_2 - atan2(data.hiY - data.loY, data.hiX - data.loX)) / 10.;
+                    leftMotor  = steer > 0. ? (1. - steer) * throttle : throttle;
+                    rightMotor = steer < 0. ? (1. + steer) * throttle : throttle;
+                }
+            }
             motor.SetLeftMotor (leftMotor);
             motor.SetRightMotor(rightMotor);
 
