@@ -91,7 +91,7 @@ void Compute::BackgroundLoop() {
 
             if (seg == Contours) {
                 cv::cvtColor(inp, whiteLines, cv::COLOR_BGR2HSV_FULL);
-                cv::inRange(whiteLines, cv::Scalar(124, 50, 50), cv::Scalar(174, 255, 255), gray);
+                cv::inRange(whiteLines, cv::Scalar(145, 50, 50), cv::Scalar(165, 220, 220), gray);
 
                 ContoursT contours;
                 cv::findContours(gray, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
