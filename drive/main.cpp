@@ -49,6 +49,7 @@ int main(int /*argc*/, char** /*argv*/) {
             float throttle = rc.ReadThrottle();
             float leftMotor, rightMotor;
             if (data.direction == GoBack) {
+                throttle = std::min(0.75F, throttle);
                 if (steer > 0.) {
                     leftMotor  = -throttle;
                     rightMotor =  throttle;
@@ -61,7 +62,7 @@ int main(int /*argc*/, char** /*argv*/) {
                     leftMotor  = throttle;
                     rightMotor = throttle;
                 } else {
-                    steer = 18. * (M_PI_2 - atan2(data.hiY - data.loY, data.hiX - data.loX));
+                    steer = (20. - 5.*throttle) * (M_PI_2 - atan2(data.hiY - data.loY, data.hiX - data.loX));
                     //std::cerr << "steer = " << steer << std::endl;
                     leftMotor  = steer > 0. ? (1. - std::min( 1.F,steer)) * throttle : throttle;
                     rightMotor = steer < 0. ? (1. + std::max(-1.F,steer)) * throttle : throttle;
