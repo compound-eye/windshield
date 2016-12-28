@@ -97,12 +97,15 @@ void Compute::BackgroundLoop() {
                 cv::findContours(gray, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
                 for (ContoursT::iterator p = contours.begin(); p != contours.end(); ++p) {
                     Polygon& poly = *p;
-                    //cv::approxPolyDP(poly, poly, 5., true);
-                    cv::fitLine(poly, line, cv::DIST_L2, 0., HoughRho, HoughTheta);
-                    cv::Point p1(-9999*line(0) + line(2), -9999*line(1) + line(3)),
-                              p2( 9999*line(0) + line(2),  9999*line(1) + line(3));
-                    cv::clipLine(cv::boundingRect(poly), p1, p2);
-                    out.lines.push_back(cv::Vec4i(p1.x, p1.y, p2.x, p2.y));
+                    cv::Rect r = cv::boundingRect(poly);
+                    if (r.y < cap->imageHeight/3) {
+                        //cv::approxPolyDP(poly, poly, 5., true);
+                        cv::fitLine(poly, line, cv::DIST_L2, 0., HoughRho, HoughTheta);
+                        cv::Point p1(-9999*line(0) + line(2), -9999*line(1) + line(3)),
+                                  p2( 9999*line(0) + line(2),  9999*line(1) + line(3));
+                        cv::clipLine(r, p1, p2);
+                        out.lines.push_back(cv::Vec4i(p1.x, p1.y, p2.x, p2.y));
+                    }
                 }
 
                 out.image = inp;
