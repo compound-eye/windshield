@@ -90,7 +90,7 @@ void Compute::BackgroundLoop() {
 
             if (seg == Contours) {
                 cv::cvtColor(inp, inp, cv::COLOR_BGR2Lab);
-                cv::inRange(inp, cv::Scalar(60, 100, 70), cv::Scalar(220, 130, 110), gray8);
+                cv::inRange(inp, cv::Scalar(60, 100, 70), cv::Scalar(220, 130, 120), gray8);
 
                 ContoursT contours;
                 cv::findContours(gray8, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
@@ -109,7 +109,7 @@ void Compute::BackgroundLoop() {
 #if 1
                 cv::mixChannels(&gray8, 1, &out.image, 1, grayTo3Ch, 3);
 #else
-                static const int to3Ch[3*2] = {2,0, 2,1, 2,2};
+                static const int to3Ch[3*2] = {0,0, 0,1, 0,2};
                 cv::mixChannels(&inp, 1, &out.image, 1, to3Ch, 3);
                 cv::drawContours(out.image, contours, -1, cv::Scalar(0,255,0));
 #endif
