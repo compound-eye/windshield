@@ -54,8 +54,8 @@ void Compute::BackgroundLoop() {
     const int HoughThreshold = cap->imageWidth * cap->imageHeight / 6500;
     const double HoughMaxGap = 25;
 
-    cv::Mat bw (cap->imageHeight/2, cap->imageWidth, CV_8UC1);
-    cv::Mat bw2(cap->imageHeight/2, cap->imageWidth, CV_8UC1);
+    cv::Mat bw(cap->imageHeight/2, cap->imageWidth, CV_8UC1);
+    cv::Mat lab[3];
     static const int toGray[3*2] = {0,0, 0,1, 0,2};
     std::vector<cv::Vec4f> newLines;
     cv::Vec4f line;
@@ -98,16 +98,14 @@ void Compute::BackgroundLoop() {
                 cv::drawContours(out.image, contours, -1, cv::Scalar(0,255,0));
             }
             else {
-                int pick[1*2]; pick[1] = 0;
-                for (int ch = 1; ch <= 2; ++ch) {
-                    pick[0] = ch;
-                    cv::mixChannels(&inp, 1, &bw2, 1, pick, 1);
-                    cv::Canny(bw2, bw, 180., 200., 5);
+                cv::split(inp, lab);
+                for (int ab = 1; ab <= 2; ++ab) {
+                    cv::Canny(lab[ab], bw, 180., 200., 5);
                     cv::HoughLinesP(bw, newLines, rho, theta, HoughThreshold, minLineLength, HoughMaxGap);
                     out.lines.insert(out.lines.end(), newLines.begin(), newLines.end());
                 }
 
-                cv::mixChannels(&inp, 1, &inp, 1, toGray, 3);
+                cv::mixChannels(lab+0, 1, &inp, 1, toGray, 3);
             }
 
             std::sort(out.lines.begin(), out.lines.end(), longer);
