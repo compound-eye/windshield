@@ -4,8 +4,6 @@
 #include <iostream>
 #include <opencv2/imgproc.hpp>
 
-#define countof(v) (sizeof v / sizeof v[0])
-
 
 static int redChannel   = 2;
 static int greenChannel = 1;
@@ -76,8 +74,9 @@ void Compute::BackgroundLoop() {
         lsd = cv::createLineSegmentDetector();
     }
 
-    cv::Mat gray(cap->imageHeight, cap->imageWidth, CV_8UC1), whiteLines;
+    cv::Mat gray8(cap->imageHeight, cap->imageWidth, CV_8UC1), bw;
     cv::Vec4f line;
+    static const int grayTo3Ch[3*2] = {0,0, 0,1, 0,2};
 
     for (int i = 0; ! cap->imagesCaptured.quitting; ++i) {
         cv::Mat inp(cap->imagesCaptured.Dequeue());
@@ -90,11 +89,11 @@ void Compute::BackgroundLoop() {
             OutputData out(cap->imageWidth, cap->imageHeight);
 
             if (seg == Contours) {
-                cv::cvtColor(inp, whiteLines, cv::COLOR_BGR2HSV_FULL);
-                cv::inRange(whiteLines, cv::Scalar(145, 100, 50), cv::Scalar(165, 220, 220), gray);
+                cv::cvtColor(inp, inp, cv::COLOR_BGR2Lab);
+                cv::inRange(inp, cv::Scalar(60, 100, 70), cv::Scalar(220, 130, 110), gray8);
 
                 ContoursT contours;
-                cv::findContours(gray, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+                cv::findContours(gray8, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
                 for (ContoursT::iterator p = contours.begin(); p != contours.end(); ++p) {
                     Polygon& poly = *p;
                     cv::Rect r = cv::boundingRect(poly);
@@ -107,27 +106,30 @@ void Compute::BackgroundLoop() {
                         out.lines.push_back(cv::Vec4i(p1.x, p1.y, p2.x, p2.y));
                     }
                 }
-
-                out.image = inp;
+#if 1
+                cv::mixChannels(&gray8, 1, &out.image, 1, grayTo3Ch, 3);
+#else
+                static const int to3Ch[3*2] = {2,0, 2,1, 2,2};
+                cv::mixChannels(&inp, 1, &out.image, 1, to3Ch, 3);
                 cv::drawContours(out.image, contours, -1, cv::Scalar(0,255,0));
+#endif
             }
             else {
                 if (colorChannels == grayChannels) {
-                    cv::cvtColor(inp, gray, cv::COLOR_BGR2GRAY);
+                    cv::cvtColor(inp, gray8, cv::COLOR_BGR2GRAY);
                 } else {
-                    const int colorFromTo[] = {colorChannels,0};
-                    cv::mixChannels(&inp, 1, &gray, 1, colorFromTo, countof(colorFromTo)/2);
+                    const int colorFromTo[1*2] = {colorChannels,0};
+                    cv::mixChannels(&inp, 1, &gray8, 1, colorFromTo, 1);
                 }
 
                 if (seg == LSD) {
-                    lsd->detect(gray, out.lines);
+                    lsd->detect(gray8, out.lines);
                 } else if (seg == Hough) {
-                    cv::Canny(gray, whiteLines, CannyThreshold1, CannyThreshold2);
-                    cv::HoughLinesP(whiteLines, out.lines, HoughRho, HoughTheta, HoughThreshold, HoughMinLineLength, HoughMaxGap);
+                    cv::Canny(gray8, bw, CannyThreshold1, CannyThreshold2);
+                    cv::HoughLinesP(bw, out.lines, HoughRho, HoughTheta, HoughThreshold, HoughMinLineLength, HoughMaxGap);
                 }
 
-                static const int grayTo3Ch[] = {0,0, 0,1, 0,2};
-                cv::mixChannels(&gray, 1, &out.image, 1, grayTo3Ch, countof(grayTo3Ch)/2);
+                cv::mixChannels(&gray8, 1, &out.image, 1, grayTo3Ch, 3);
             }
 
             std::sort(out.lines.begin(), out.lines.end(), longer);
