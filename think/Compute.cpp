@@ -5,14 +5,6 @@
 #include <opencv2/imgproc.hpp>
 
 
-static int redChannel   = 2;
-static int greenChannel = 1;
-static int blueChannel  = 0;
-static int grayChannels = -1;
-
-enum SegMethod {Hough, LSD, Contours};
-
-
 template<typename T>
 static inline T square(T x) {
     return x * x;
@@ -41,7 +33,7 @@ void OutputData::UseLineForDirection(const cv::Vec4i& line) {
     }
 
     const int mid = image.cols / 2;
-    direction = loY < image.rows/3 && (mid < loX && loX < hiX || mid > loX && loX > hiX)
+    direction = mid < loX && loX < hiX || mid > loX && loX > hiX
               ? Turn
               : GoStraight;
 }
@@ -50,33 +42,10 @@ typedef std::vector<cv::Point> Polygon;
 typedef std::vector<Polygon> ContoursT;
 
 void Compute::BackgroundLoop() {
-    const SegMethod seg = Contours;
+    const double rho = 2., theta = 0.02;
 
-    const int    HoughThreshold = cap->imageWidth * cap->imageHeight / 6500;
-    const double HoughMinLineLength = cap->imageHeight / 4.;
-    const double HoughMaxGap = cap->imageHeight / 50.;
-    const double HoughRho = 2.;
-
-#if 1
-    const double CannyThreshold1 =  50.;
-    const double CannyThreshold2 = 100.;
-    const double HoughTheta = 0.05;
-    const int colorChannels = redChannel;
-#else
-    const double CannyThreshold1 = 100.;
-    const double CannyThreshold2 = 200.;
-    const double HoughTheta = 0.02;
-    const int colorChannels = grayChannels;
-#endif
-
-    cv::Ptr<cv::LineSegmentDetector> lsd;
-    if (seg == LSD) {
-        lsd = cv::createLineSegmentDetector();
-    }
-
-    cv::Mat gray8(cap->imageHeight, cap->imageWidth, CV_8UC1), bw;
+    cv::Mat bw(cap->imageHeight/2, cap->imageWidth, CV_8UC1);
     cv::Vec4f line;
-    static const int grayTo3Ch[3*2] = {0,0, 0,1, 0,2};
 
     for (int i = 0; ! cap->imagesCaptured.quitting; ++i) {
         cv::Mat inp(cap->imagesCaptured.Dequeue());
@@ -86,51 +55,34 @@ void Compute::BackgroundLoop() {
                 log->imagesToLog.Enqueue(inp.clone());
             }
 
-            OutputData out(cap->imageWidth, cap->imageHeight);
+            OutputData out;
+            out.image = inp;
 
-            if (seg == Contours) {
-                cv::cvtColor(inp, inp, cv::COLOR_BGR2Lab);
-                cv::inRange(inp, cv::Scalar(60, 100, 70), cv::Scalar(220, 130, 120), gray8);
+            inp = inp.rowRange(0, cap->imageHeight/2);
 
-                ContoursT contours;
-                cv::findContours(gray8, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-                for (ContoursT::iterator p = contours.begin(); p != contours.end(); ++p) {
-                    Polygon& poly = *p;
-                    cv::Rect r = cv::boundingRect(poly);
-                    if (r.y < cap->imageHeight/3) {
-                        //cv::approxPolyDP(poly, poly, 5., true);
-                        cv::fitLine(poly, line, cv::DIST_L2, 0., HoughRho, HoughTheta);
-                        cv::Point p1(-9999*line(0) + line(2), -9999*line(1) + line(3)),
-                                  p2( 9999*line(0) + line(2),  9999*line(1) + line(3));
-                        cv::clipLine(r, p1, p2);
-                        out.lines.push_back(cv::Vec4i(p1.x, p1.y, p2.x, p2.y));
-                    }
+            cv::cvtColor(inp, inp, cv::COLOR_BGR2Lab);
+            static const int pickB[1*2] = {2,0};
+            cv::mixChannels(&inp, 1, &bw, 1, pickB, 1);
+            cv::threshold(bw, bw, 128, 255, cv::THRESH_BINARY_INV|cv::THRESH_OTSU);
+
+            ContoursT contours;
+            cv::findContours(bw, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+            for (ContoursT::iterator p = contours.begin(); p != contours.end(); ++p) {
+                Polygon& poly = *p;
+                cv::Rect r = cv::boundingRect(poly);
+                if (r.y < cap->imageHeight/3) {
+                    //cv::approxPolyDP(poly, poly, 5., true);
+                    cv::fitLine(poly, line, cv::DIST_L2, 0., rho, theta);
+                    cv::Point p1(-9999*line(0) + line(2), -9999*line(1) + line(3)),
+                              p2( 9999*line(0) + line(2),  9999*line(1) + line(3));
+                    cv::clipLine(r, p1, p2);
+                    out.lines.push_back(cv::Vec4i(p1.x, p1.y, p2.x, p2.y));
                 }
-#if 1
-                cv::mixChannels(&gray8, 1, &out.image, 1, grayTo3Ch, 3);
-#else
-                static const int to3Ch[3*2] = {0,0, 0,1, 0,2};
-                cv::mixChannels(&inp, 1, &out.image, 1, to3Ch, 3);
-                cv::drawContours(out.image, contours, -1, cv::Scalar(0,255,0));
-#endif
             }
-            else {
-                if (colorChannels == grayChannels) {
-                    cv::cvtColor(inp, gray8, cv::COLOR_BGR2GRAY);
-                } else {
-                    const int colorFromTo[1*2] = {colorChannels,0};
-                    cv::mixChannels(&inp, 1, &gray8, 1, colorFromTo, 1);
-                }
 
-                if (seg == LSD) {
-                    lsd->detect(gray8, out.lines);
-                } else if (seg == Hough) {
-                    cv::Canny(gray8, bw, CannyThreshold1, CannyThreshold2);
-                    cv::HoughLinesP(bw, out.lines, HoughRho, HoughTheta, HoughThreshold, HoughMinLineLength, HoughMaxGap);
-                }
-
-                cv::mixChannels(&gray8, 1, &out.image, 1, grayTo3Ch, 3);
-            }
+            static const int toGray[3*2] = {0,0, 0,1, 0,2};
+            cv::mixChannels(&inp, 1, &inp, 1, toGray, 3);
+            cv::drawContours(out.image, contours, -1, cv::Scalar(0,255,0));
 
             std::sort(out.lines.begin(), out.lines.end(), longer);
             out.direction = GoBack;
