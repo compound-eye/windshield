@@ -51,7 +51,7 @@ void Compute::BackgroundLoop() {
     const double rho = 2., theta = 0.02;
     const int minLineLength = cap->imageHeight / 3;
 
-    const double maxThresholdArea = cap->imageWidth * cap->imageHeight / 5;
+    const double maxThresholdArea = cap->imageWidth * cap->imageHeight / 12;
 
     const int HoughThreshold = cap->imageWidth * cap->imageHeight / 6500;
     const double HoughMaxGap = 25;

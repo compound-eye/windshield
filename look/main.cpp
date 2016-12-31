@@ -80,7 +80,8 @@ static char* RoverImageFileName() {
 
 static void Init(int& argc, char**argv) {
     cap = new Capture(RoverImageFileName(), cv::CAP_IMAGES);
-    //cap = new Capture("/home/haoyang/rover-images/2016-12-30-161015/%03d.png", cv::CAP_IMAGES);
+    //cap = new Capture("/home/haoyang/rover-images/2016-12-30-165058/%03d.png", cv::CAP_IMAGES);
+    //cap = new Capture("/home/haoyang/rover-images/2016-12-30-165058/078.png", cv::CAP_FFMPEG);
     //cap = new Capture(0);
 
     viewWidth  = cap->imageWidth;
