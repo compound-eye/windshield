@@ -79,11 +79,9 @@ static char* RoverImageFileName() {
 }
 
 static void Init(int& argc, char**argv) {
-#if 1
     cap = new Capture(RoverImageFileName(), cv::CAP_IMAGES);
-#else
-    cap = new Capture(0);
-#endif
+    //cap = new Capture("/home/haoyang/rover-images/2016-12-30-161015/%03d.png", cv::CAP_IMAGES);
+    //cap = new Capture(0);
 
     viewWidth  = cap->imageWidth;
     viewHeight = cap->imageHeight;

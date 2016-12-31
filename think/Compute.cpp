@@ -6,7 +6,7 @@
 
 
 enum SegMethod {Threshold, Edge};
-static const SegMethod seg = Edge;
+static const SegMethod seg = Threshold;
 
 
 template<typename T>
@@ -51,6 +51,8 @@ void Compute::BackgroundLoop() {
     const double rho = 2., theta = 0.02;
     const int minLineLength = cap->imageHeight / 3;
 
+    const double maxThresholdArea = cap->imageWidth * cap->imageHeight / 5;
+
     const int HoughThreshold = cap->imageWidth * cap->imageHeight / 6500;
     const double HoughMaxGap = 25;
 
@@ -81,15 +83,19 @@ void Compute::BackgroundLoop() {
 
                 ContoursT contours;
                 cv::findContours(bw, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-                for (ContoursT::iterator p = contours.begin(); p != contours.end(); ++p) {
-                    Polygon& poly = *p;
-                    cv::Rect r = cv::boundingRect(poly);
-                    if (r.y < cap->imageHeight/3) {
-                        //cv::approxPolyDP(poly, poly, 5., true);
+                double area = 0.;
+                for (ContoursT::const_iterator p = contours.begin();
+                     area < maxThresholdArea && p != contours.end();
+                     ++p) {
+                    area += cv::contourArea(*p);
+                }
+                if (area < maxThresholdArea) {
+                    for (ContoursT::iterator p = contours.begin(); p != contours.end(); ++p) {
+                        Polygon& poly = *p;
                         cv::fitLine(poly, line, cv::DIST_L2, 0., rho, theta);
                         cv::Point p1(-9999*line(0) + line(2), -9999*line(1) + line(3)),
                                   p2( 9999*line(0) + line(2),  9999*line(1) + line(3));
-                        cv::clipLine(r, p1, p2);
+                        cv::clipLine(cv::boundingRect(poly), p1, p2);
                         out.lines.push_back(cv::Vec4i(p1.x, p1.y, p2.x, p2.y));
                     }
                 }
