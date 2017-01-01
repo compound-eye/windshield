@@ -8,6 +8,8 @@
 enum SegMethod {Threshold, Edge};
 static const SegMethod seg = Threshold;
 
+static const bool thresholdCalibrating = false;
+
 
 template<typename T>
 static inline T square(T x) {
@@ -61,6 +63,8 @@ void Compute::BackgroundLoop() {
     static const int toGray[3*2] = {0,0, 0,1, 0,2};
     std::vector<cv::Vec4f> newLines;
     cv::Vec4f line;
+    double totalThreshold = 0., threshold = 0.;
+    int goodThresholdFrames = 0;
 
     for (int i = 0; ! cap->imagesCaptured.quitting; ++i) {
         cv::Mat inp(cap->imagesCaptured.Dequeue());
@@ -79,7 +83,7 @@ void Compute::BackgroundLoop() {
             if (seg == Threshold) {
                 static const int pickB[1*2] = {2,0};
                 cv::mixChannels(&inp, 1, &bw, 1, pickB, 1);
-                cv::threshold(bw, bw, 128, 255, cv::THRESH_BINARY_INV|cv::THRESH_OTSU);
+                threshold = cv::threshold(bw, bw, 128, 255, cv::THRESH_BINARY_INV|cv::THRESH_OTSU);
 
                 ContoursT contours;
                 cv::findContours(bw, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
@@ -121,9 +125,20 @@ void Compute::BackgroundLoop() {
                  ++l) {
                 out.UseLineForDirection(*l);
             }
+            if (out.direction != GoBack && seg == Threshold) {
+                totalThreshold += threshold;
+                ++goodThresholdFrames;
+                if (thresholdCalibrating) {
+                    std::cerr << "threshold: " << threshold << std::endl;
+                }
+            }
 
             SwapOutputData(out);
         }
+    }
+
+    if (goodThresholdFrames > 0) {
+        std::cerr << "average threshold: " << totalThreshold / goodThresholdFrames << std::endl;
     }
 }
 
