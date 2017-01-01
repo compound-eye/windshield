@@ -70,7 +70,7 @@ void Compute::BackgroundLoop() {
         cv::Mat inp(cap->imagesCaptured.Dequeue());
         if (! inp.empty()) {
 
-            if (log && i % 10 == 0 && log->imagesToLog.size < log->imagesToLog.Capacity()) {
+            if (log && i % 5 == 0 && log->imagesToLog.size < log->imagesToLog.Capacity()) {
                 log->imagesToLog.Enqueue(inp.clone());
             }
 
