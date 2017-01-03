@@ -20,15 +20,17 @@ static Timer timer;
 static GLsync rendering = 0;
 
 static void Display() {
-    OutputData data;
-    compute->SwapOutputData(data);
-    if (! data.image.empty()) {
-        view->Draw(data, viewWidth, viewHeight);
+    if (! rendering) {
+        OutputData data;
+        compute->SwapOutputData(data);
+        if (! data.image.empty()) {
+            view->Draw(data, viewWidth, viewHeight);
 
-        glDeleteSync(rendering);
-        rendering = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+            glDeleteSync(rendering);
+            rendering = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
-        glutSwapBuffers();
+            glutSwapBuffers();
+        }
     }
 }
 
