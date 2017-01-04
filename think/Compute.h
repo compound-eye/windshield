@@ -12,7 +12,7 @@ typedef std::vector<cv::Vec4i> Lines;
 enum Direction {GoStraight, Turn, GoBack};
 
 struct OutputData {
-    cv::Mat image;
+    cv::Mat imageBefore, imageAfter;
     Lines lines;
     Direction direction;
     int loX, loY, hiX, hiY;

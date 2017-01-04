@@ -21,7 +21,7 @@ ImageView::~ImageView() {
 }
 
 void ImageView::Draw(const OutputData& data, int viewWidth, int viewHeight) const {
-    float w = data.image.cols, h = data.image.rows;
+    float w = data.imageAfter.cols, h = data.imageAfter.rows;
 
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
@@ -39,7 +39,7 @@ void ImageView::Draw(const OutputData& data, int viewWidth, int viewHeight) cons
     glBindTexture(GL_TEXTURE_2D, tex);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_BGR, GL_UNSIGNED_BYTE, data.image.data);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_BGR, GL_UNSIGNED_BYTE, data.imageAfter.data);
 
     glBegin(GL_QUAD_STRIP);
     glTexCoord2f(0., 1.);  glVertex2f(0, h);

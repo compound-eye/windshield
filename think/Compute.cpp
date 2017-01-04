@@ -38,8 +38,8 @@ void OutputData::UseLineForDirection(const cv::Vec4i& line) {
         loY = line(3);
     }
 
-    if (hiY > image.rows / 20) {
-        const int mid = image.cols / 2;
+    if (hiY > imageAfter.rows / 20) {
+        const int mid = imageAfter.cols / 2;
         direction = mid < loX && loX < hiX || mid > loX && loX > hiX
                   ? Turn
                   : GoStraight;
@@ -67,17 +67,16 @@ void Compute::BackgroundLoop() {
     int goodThresholdFrames = 0;
 
     for (int i = 0; ! cap->imagesCaptured.quitting; ++i) {
-        cv::Mat inp(cap->imagesCaptured.Dequeue());
-        if (! inp.empty()) {
+        OutputData out;
+        out.imageBefore = cap->imagesCaptured.Dequeue();
+        if (! out.imageBefore.empty()) {
 
             if (log && i % 5 == 0 && log->imagesToLog.size < log->imagesToLog.Capacity()) {
-                log->imagesToLog.Enqueue(inp.clone());
+                log->imagesToLog.Enqueue(out.imageBefore);
             }
 
-            OutputData out;
-            out.image = inp;
-
-            inp = inp.rowRange(0, cap->imageHeight/2);
+            out.imageAfter = out.imageBefore.clone();
+            cv::Mat inp = out.imageAfter.rowRange(0, cap->imageHeight/2);
             cv::cvtColor(inp, inp, cv::COLOR_BGR2Lab);
 
             if (seg == Threshold) {
@@ -105,7 +104,7 @@ void Compute::BackgroundLoop() {
                 }
 
                 cv::mixChannels(&inp, 1, &inp, 1, toGray, 3);
-                cv::drawContours(out.image, contours, -1, cv::Scalar(0,255,0));
+                cv::drawContours(out.imageAfter, contours, -1, cv::Scalar(0,255,0));
             }
             else {
                 cv::split(inp, lab);

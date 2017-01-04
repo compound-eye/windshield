@@ -23,7 +23,7 @@ static void Display() {
     if (! rendering) {
         OutputData data;
         compute->SwapOutputData(data);
-        if (! data.image.empty()) {
+        if (! data.imageAfter.empty()) {
             view->Draw(data, viewWidth, viewHeight);
 
             glDeleteSync(rendering);
