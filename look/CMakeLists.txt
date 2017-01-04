@@ -13,8 +13,7 @@ aux_source_directory(../think SRC_LIST)
 
 add_executable(${PROJECT_NAME}
                ${SRC_LIST}
-               ../think/queue.h
-               ../think/VideoSource.h)
+               ../think/queue.h)
 
 target_link_libraries(${PROJECT_NAME}
                       pthread

@@ -5,15 +5,22 @@
 #include <opencv2/core.hpp>
 
 
+class Timer;
+
 class VideoSource {
 public:
-    int imageWidth, imageHeight;
+    enum Command {Noop, Play, Pause, Rewind, NextFrame, PrevFrame};
 
+    int imageWidth, imageHeight;
     Queue<cv::Mat,1> imagesCaptured;
+    Queue<Command,2> commands;
+    bool playing;
 
     virtual void Start() = 0;
     virtual void Stop() = 0;
-    virtual ~VideoSource() {}
+    virtual ~VideoSource();
+
+    Command NextCommand(int& frameCount, Timer& timer);
 };
 
 #endif // VIDEOSOURCE_H

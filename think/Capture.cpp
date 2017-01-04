@@ -14,6 +14,8 @@ Capture::Capture(int device)
     , fps(-1)
     , canDropFrame(false)
 {
+    playing = true;
+
 #if 1
     imageWidth  = cameraWidth;
     imageHeight = cameraHeight;
@@ -35,6 +37,7 @@ Capture::Capture(const char* filename, int api)
     , fps(videoFileFPS)
     , canDropFrame(false)
 {
+    playing = true;
     imageWidth  = cap.get(cv::CAP_PROP_FRAME_WIDTH);
     imageHeight = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
 }
@@ -45,23 +48,48 @@ void Capture::BackgroundLoop() {
     Timer timer;
 
     timer.Start();
-    while (! imagesCaptured.quitting) {
+    while (! commands.quitting) {
 
-        if (! cap.read(image)) {break;}
+        bool playThisFrame = true;
+        switch (NextCommand(frameCount, timer)) {
+        case Rewind:
+            cap.set(cv::CAP_PROP_POS_FRAMES, 0.);
+            break;
+        case NextFrame:
+            break;
+        case PrevFrame: {
+            double prev = cap.get(cv::CAP_PROP_POS_FRAMES) - 2.;
+            if (prev >= 0.) {
+                cap.set(cv::CAP_PROP_POS_FRAMES, prev);
+            }
+          } break;
+        default:
+            playThisFrame = playing;
+            break;
+        }
 
-        if (canDropFrame && imagesCaptured.size >= imagesCaptured.Capacity()) {
-            std::cerr << "Capture dropped frame." << std::endl;
-        } else {
-            imagesCaptured.Enqueue(image);
+        if (playThisFrame) {
+            if (cap.read(image)) {
+                if (canDropFrame && imagesCaptured.size >= imagesCaptured.Capacity()) {
+                    std::cerr << "Capture dropped frame." << std::endl;
+                } else {
+                    imagesCaptured.Enqueue(image);
 
-            ++frameCount;
-            struct timespec sleep = {0, fps > 0 ? 1000 * timer.NextSleep(fps, frameCount) : 0};
-            if (sleep.tv_nsec > 0) {
-                nanosleep(&sleep, NULL);
+                    ++frameCount;
+                    struct timespec sleep = {0, fps > 0 ? 1000 * timer.NextSleep(fps, frameCount) : 0};
+                    if (sleep.tv_nsec > 0) {
+                        nanosleep(&sleep, NULL);
+                    }
+                }
+            } else if (playing) {
+                playing = false;
+                timer.PrintTimeStats(frameCount);
             }
         }
     }
-    timer.PrintTimeStats(frameCount);
+    if (playing) {
+        timer.PrintTimeStats(frameCount);
+    }
 }
 
 static void* CaptureThread(void* cap) {
@@ -74,6 +102,6 @@ void Capture::Start() {
 }
 
 void Capture::Stop() {
-    imagesCaptured.Quit();
+    commands.Quit();
     pthread_join(thread, NULL);
 }

@@ -53,6 +53,26 @@ static void Refresh(int what) {
     }
 }
 
+static void Keyboard(unsigned char key, int /*x*/, int /*y*/) {
+    if (key == ' ') {
+        cap->commands.Enqueue(cap->playing ? VideoSource::Pause : VideoSource::Play);
+    }
+}
+
+static void SpecialKey(int key, int /*x*/, int /*y*/) {
+    switch (key) {
+    case GLUT_KEY_UP:
+        cap->commands.Enqueue(VideoSource::Rewind);
+        break;
+    case GLUT_KEY_LEFT:
+        cap->commands.Enqueue(VideoSource::PrevFrame);
+        break;
+    case GLUT_KEY_RIGHT:
+        cap->commands.Enqueue(VideoSource::NextFrame);
+        break;
+    }
+}
+
 static void Cleanup() {
     compute->Stop();
     cap->Stop();
@@ -103,6 +123,8 @@ static void Init(int& argc, char**argv) {
 
     glutTimerFunc(0, Refresh, 0);
     glutDisplayFunc(Display);
+    glutKeyboardFunc(Keyboard);
+    glutSpecialFunc(SpecialKey);
     glutCloseFunc(Cleanup);
 
     timer.Start();
