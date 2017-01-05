@@ -14,6 +14,7 @@ Capture::Capture(int device)
     , fps(-1)
     , canDropFrame(false)
 {
+    printTimeStats = true;
     playing = true;
 
 #if 1
@@ -37,6 +38,7 @@ Capture::Capture(const char* filename, int api)
     , fps(videoFileFPS)
     , canDropFrame(false)
 {
+    printTimeStats = false;
     playing = true;
     imageWidth  = cap.get(cv::CAP_PROP_FRAME_WIDTH);
     imageHeight = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
@@ -83,12 +85,12 @@ void Capture::BackgroundLoop() {
                 }
             } else if (playing) {
                 playing = false;
-                timer.PrintTimeStats(frameCount);
+                PrintTimeStats(frameCount, timer);
             }
         }
     }
     if (playing) {
-        timer.PrintTimeStats(frameCount);
+        PrintTimeStats(frameCount, timer);
     }
 }
 

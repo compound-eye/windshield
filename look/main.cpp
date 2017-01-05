@@ -4,32 +4,47 @@
 #include "Timer.h"
 
 #include <dirent.h>
+#include <iostream>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
+#include <opencv2/imgproc.hpp>
 
 
 static VideoSource* cap = NULL;
 static Compute* compute = NULL;
+static OutputData latestData;
 
 static int viewWidth, viewHeight;
 static ImageView* view = NULL;
+static Mouse mouse;
+static bool mouseMoved = false;
 
 static const int refreshRate = 30;
 static Timer timer;
 
 static GLsync rendering = 0;
 
+static void DrawData(const OutputData& data) {
+    view->Draw(data, viewWidth, viewHeight, mouse);
+
+    glDeleteSync(rendering);
+    rendering = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+
+    glutSwapBuffers();
+
+    mouseMoved = false;
+}
+
 static void Display() {
     if (! rendering) {
-        OutputData data;
-        compute->SwapOutputData(data);
-        if (! data.imageAfter.empty()) {
-            view->Draw(data, viewWidth, viewHeight);
-
-            glDeleteSync(rendering);
-            rendering = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-
-            glutSwapBuffers();
+        OutputData newData;
+        compute->SwapOutputData(newData);
+        if (! newData.imageAfter.empty()) {
+            DrawData(newData);
+            latestData = newData;
+        }
+        else if (mouseMoved && ! cap->playing && ! latestData.imageAfter.empty()) {
+            DrawData(latestData);
         }
     }
 }
@@ -51,6 +66,59 @@ static void Refresh(int what) {
         Display();
         glutTimerFunc(timer.NextSleep(refreshRate,INT_MAX)/1000, Refresh, what);
     }
+}
+
+static void LookAtPoint(const cv::Mat& image, int x, int y) {
+    cv::Mat p = cv::Mat(image, cv::Rect(x, y, 1, 1)).clone();
+    std::cerr << "R:" << (int)p.data[2] << " G:" << (int)p.data[1] << " B:" << (int)p.data[0] << std::endl;
+    cv::cvtColor(p, p, cv::COLOR_BGR2Lab);
+    std::cerr << "L:" << (int)p.data[0] << " a:" << (int)p.data[1] << " b:" << (int)p.data[2] << std::endl;
+    std::cerr << std::endl;
+}
+
+static void LookAtRect(const cv::Mat& image, int x0, int y0, int x1, int y1) {
+    cv::Mat inp;
+    cv::cvtColor(cv::Mat(image, cv::Rect(std::min(x0,x1), std::min(y0,y1), std::abs(x0-x1), std::abs(y0-y1))),
+                 inp, cv::COLOR_BGR2Lab);
+    cv::Mat lab[3];
+    cv::split(inp, lab);
+    double otsu_a = cv::threshold(lab[1], lab[0], 128, 255, cv::THRESH_OTSU);
+    double otsu_b = cv::threshold(lab[2], lab[0], 128, 255, cv::THRESH_OTSU);
+    double  tri_a = cv::threshold(lab[1], lab[0], 128, 255, cv::THRESH_TRIANGLE);
+    double  tri_b = cv::threshold(lab[2], lab[0], 128, 255, cv::THRESH_TRIANGLE);
+    std::cerr << "Otsu threshold on a:" << otsu_a << " b:" << otsu_b << std::endl;
+    std::cerr << "Triangle threshold on a:" << tri_a << " b:" << tri_b << std::endl;
+    std::cerr << std::endl;
+}
+
+static void MouseDrag(int x, int y) {
+    mouse.x1 = x;
+    mouse.y1 = y;
+    mouseMoved = true;
+}
+
+static void MouseClick(int /*button*/, int state, int x, int y) {
+    switch (state) {
+    case GLUT_DOWN:
+        mouse.down = true;
+        mouse.x0 = mouse.x1 = x;
+        mouse.y0 = mouse.y1 = y;
+
+        if (! latestData.imageBefore.empty()) {
+            LookAtPoint(latestData.imageBefore, x, y);
+        }
+        break;
+
+    case GLUT_UP:
+        mouse.down = false;
+
+        if (! latestData.imageBefore.empty() && x != mouse.x0 && y != mouse.y0) {
+            LookAtRect(latestData.imageBefore, mouse.x0, mouse.y0, x, y);
+        }
+        break;
+    }
+
+    mouseMoved = true;
 }
 
 static void Keyboard(unsigned char key, int /*x*/, int /*y*/) {
@@ -123,6 +191,8 @@ static void Init(int& argc, char**argv) {
 
     glutTimerFunc(0, Refresh, 0);
     glutDisplayFunc(Display);
+    glutMouseFunc(MouseClick);
+    glutMotionFunc(MouseDrag);
     glutKeyboardFunc(Keyboard);
     glutSpecialFunc(SpecialKey);
     glutCloseFunc(Cleanup);

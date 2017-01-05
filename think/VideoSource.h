@@ -14,6 +14,7 @@ public:
     int imageWidth, imageHeight;
     Queue<cv::Mat,1> imagesCaptured;
     Queue<Command,2> commands;
+    bool printTimeStats;
     bool playing;
 
     virtual void Start() = 0;
@@ -21,6 +22,7 @@ public:
     virtual ~VideoSource();
 
     Command NextCommand(int& frameCount, Timer& timer);
+    void PrintTimeStats(int  frameCount, Timer& timer);
 };
 
 #endif // VIDEOSOURCE_H

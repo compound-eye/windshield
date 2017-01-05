@@ -20,7 +20,7 @@ ImageView::~ImageView() {
     glDeleteTextures(1, &tex);
 }
 
-void ImageView::Draw(const OutputData& data, int viewWidth, int viewHeight) const {
+void ImageView::Draw(const OutputData& data, int viewWidth, int viewHeight, const Mouse& mouse) const {
     float w = data.imageAfter.cols, h = data.imageAfter.rows;
 
     glEnable(GL_TEXTURE_2D);
@@ -64,6 +64,16 @@ void ImageView::Draw(const OutputData& data, int viewWidth, int viewHeight) cons
         glBegin(GL_LINES);
             glVertex2i(data.loX, data.loY);
             glVertex2i(data.hiX, data.hiY);
+        glEnd();
+    }
+
+    if (mouse.down) {
+        glColor3f(1., 1., 1.);
+        glBegin(GL_LINE_LOOP);
+            glVertex2i(mouse.x0, mouse.y0);
+            glVertex2i(mouse.x1, mouse.y0);
+            glVertex2i(mouse.x1, mouse.y1);
+            glVertex2i(mouse.x0, mouse.y1);
         glEnd();
     }
 }

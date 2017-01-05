@@ -23,11 +23,17 @@ VideoSource::Command VideoSource::NextCommand(int& frameCount, Timer& timer) {
         case PrevFrame:
             if (playing) {
                 playing = false;
-                timer.PrintTimeStats(frameCount);
+                PrintTimeStats(frameCount, timer);
             }
             break;
         }
 
         return cmd;
+    }
+}
+
+void VideoSource::PrintTimeStats(int frameCount, Timer& timer) {
+    if (printTimeStats) {
+        timer.PrintTimeStats(frameCount);
     }
 }
