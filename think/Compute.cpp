@@ -6,7 +6,7 @@
 
 
 enum SegMethod {Threshold, Edge};
-static const SegMethod seg = Threshold;
+static const SegMethod seg = Edge;
 
 static const bool thresholdCalibrating = false;
 
