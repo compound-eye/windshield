@@ -39,8 +39,8 @@ void OutputData::UseLineForDirection(const cv::Vec4i& line) {
     }
 
     if (hiY > imageAfter.rows / 20) {
-        const int mid = imageAfter.cols / 2;
-        direction = mid < loX && loX < hiX || mid > loX && loX > hiX
+        const float w = imageAfter.cols;
+        direction = 0.6*w < hiX && 0.5*w < loX || 0.4*w > hiX && 0.5*w > loX
                   ? Turn
                   : GoStraight;
     }
@@ -58,7 +58,7 @@ void Compute::BackgroundLoop() {
     const int HoughThreshold = cap->imageWidth * cap->imageHeight / 6500;
     const double HoughMaxGap = 25;
 
-    cv::Mat bw(cap->imageHeight/2, cap->imageWidth, CV_8UC1);
+    cv::Mat bw(cap->imageHeight, cap->imageWidth, CV_8UC1);
     cv::Mat lab[3];
     static const int toGray[3*2] = {0,0, 0,1, 0,2};
     std::vector<cv::Vec4f> newLines;
@@ -76,13 +76,13 @@ void Compute::BackgroundLoop() {
             }
 
             out.imageAfter = out.imageBefore.clone();
-            cv::Mat inp = out.imageAfter.rowRange(0, cap->imageHeight/2);
+            cv::Mat inp = out.imageAfter;//.rowRange(0, cap->imageHeight/2);
             cv::cvtColor(inp, inp, cv::COLOR_BGR2Lab);
 
             if (seg == Threshold) {
-                static const int pickB[1*2] = {2,0};
+                static const int pickB[1*2] = {0,0};
                 cv::mixChannels(&inp, 1, &bw, 1, pickB, 1);
-                threshold = cv::threshold(bw, bw, 128, 255, cv::THRESH_BINARY_INV|cv::THRESH_OTSU);
+                threshold = cv::threshold(bw, bw, 160, 255, 0 /*cv::THRESH_BINARY_INV|cv::THRESH_OTSU*/);
 
                 ContoursT contours;
                 cv::findContours(bw, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
@@ -103,18 +103,18 @@ void Compute::BackgroundLoop() {
                     }
                 }
 
-                cv::mixChannels(&inp, 1, &inp, 1, toGray, 3);
+                cv::mixChannels(&bw, 1, &inp, 1, toGray, 3);
                 cv::drawContours(out.imageAfter, contours, -1, cv::Scalar(0,255,0));
             }
             else {
                 cv::split(inp, lab);
-                for (int ab = 1; ab <= 2; ++ab) {
-                    cv::Canny(lab[ab], bw, 180., 200., 5);
+                for (int ab = 0; ab <= 0; ++ab) {
+                    cv::Canny(lab[ab], bw, 150., 180., 3);
                     cv::HoughLinesP(bw, newLines, rho, theta, HoughThreshold, minLineLength, HoughMaxGap);
                     out.lines.insert(out.lines.end(), newLines.begin(), newLines.end());
                 }
 
-                cv::mixChannels(lab+0, 1, &inp, 1, toGray, 3);
+                cv::mixChannels(&bw, 1, &inp, 1, toGray, 3);
             }
 
             std::sort(out.lines.begin(), out.lines.end(), longer);

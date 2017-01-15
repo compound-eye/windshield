@@ -26,6 +26,7 @@ Motor::Motor() {
     pwm.set_duty_cycle(chRightMotor, outNeutral);
     pwm.set_duty_cycle(chPanCamera,  outNeutral);
     pwm.set_duty_cycle(chTiltCamera, 1.);
+    pwm.set_duty_cycle(chPanCamera, 1.47);
 }
 
 void Motor::SetLeftMotor(float v) {

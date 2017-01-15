@@ -62,7 +62,7 @@ int main(int /*argc*/, char** /*argv*/) {
                     leftMotor  = throttle;
                     rightMotor = throttle;
                 } else {
-                    steer = (20. - 5.*throttle) * (M_PI_2 - atan2(data.hiY - data.loY, data.hiX - data.loX));
+                    steer = rc.ReadSteer();
                     //std::cerr << "steer = " << steer << std::endl;
                     leftMotor  = steer > 0. ? (1. - std::min( 1.F,steer)) * throttle : throttle;
                     rightMotor = steer < 0. ? (1. + std::max(-1.F,steer)) * throttle : throttle;

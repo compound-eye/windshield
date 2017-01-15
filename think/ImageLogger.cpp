@@ -18,7 +18,7 @@ void ImageLogger::BackgroundLoop() {
     for (int i = 0; ! imagesToLog.quitting; ++i) {
         cv::Mat image = imagesToLog.Dequeue();
         if (! image.empty()) {
-            sprintf(fname, "%s/%03d.png", pathLogDir.c_str(), i);
+            sprintf(fname, "%s/%04d.png", pathLogDir.c_str(), i);
             cv::imwrite(fname, image);
         }
     }
