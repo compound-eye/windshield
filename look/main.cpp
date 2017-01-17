@@ -82,12 +82,14 @@ static void LookAtRect(const cv::Mat& image, int x0, int y0, int x1, int y1) {
                  inp, cv::COLOR_BGR2Lab);
     cv::Mat lab[3];
     cv::split(inp, lab);
+    double otsu_L = cv::threshold(lab[0], lab[0], 128, 255, cv::THRESH_OTSU);
     double otsu_a = cv::threshold(lab[1], lab[0], 128, 255, cv::THRESH_OTSU);
     double otsu_b = cv::threshold(lab[2], lab[0], 128, 255, cv::THRESH_OTSU);
+    double  tri_L = cv::threshold(lab[0], lab[0], 128, 255, cv::THRESH_TRIANGLE);
     double  tri_a = cv::threshold(lab[1], lab[0], 128, 255, cv::THRESH_TRIANGLE);
     double  tri_b = cv::threshold(lab[2], lab[0], 128, 255, cv::THRESH_TRIANGLE);
-    std::cerr << "Otsu threshold on a:" << otsu_a << " b:" << otsu_b << std::endl;
-    std::cerr << "Triangle threshold on a:" << tri_a << " b:" << tri_b << std::endl;
+    std::cerr << "Otsu threshold on L:" << otsu_L << "a:" << otsu_a << " b:" << otsu_b << std::endl;
+    std::cerr << "Triangle threshold on L:" << otsu_a << "a:" << tri_a << " b:" << tri_b << std::endl;
     std::cerr << std::endl;
 }
 
@@ -158,7 +160,7 @@ static char* RoverImageFileName() {
     struct dirent** dirs = NULL;
     const int countDirs = scandir(roverImagesDir, &dirs, NULL, alphasort);
     static char fname[200];
-    sprintf(fname, "%s/%s/%%03d.png", roverImagesDir, dirs[countDirs-1]->d_name);
+    sprintf(fname, "%s/%s/%%04d.png", roverImagesDir, dirs[countDirs-1]->d_name);
 
     for (int i = 0; i < countDirs; ++i) {
         free(dirs[i]);
