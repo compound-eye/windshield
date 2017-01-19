@@ -5,139 +5,110 @@
 #include <opencv2/imgproc.hpp>
 
 
-enum SegMethod {Threshold, Edge};
-static const SegMethod seg = Edge;
-
-static const bool thresholdCalibrating = false;
-
-
 template<typename T>
 static inline T square(T x) {
     return x * x;
 }
 
-template<typename T>
-static inline T length2(const cv::Vec<T,4>& v) {
-    return square(v(0) - v(2)) + square(v(1) - v(3));
+struct LineInfo {
+    float angle;
+    float length;
+};
+
+static bool byAngle(const LineInfo& v, const LineInfo& w) {
+    return v.angle < w.angle;
 }
-
-static bool longer(const cv::Vec4i& v, const cv::Vec4i& w) {
-    return length2(v) > length2(w);
-}
-
-void OutputData::UseLineForDirection(const cv::Vec4i& line) {
-    if (line(1) < line(3)) {
-        loX = line(0);
-        loY = line(1);
-        hiX = line(2);
-        hiY = line(3);
-    } else {
-        hiX = line(0);
-        hiY = line(1);
-        loX = line(2);
-        loY = line(3);
-    }
-
-    if (hiY > imageAfter.rows / 20) {
-        const float w = imageAfter.cols;
-        direction = 0.6*w < hiX && 0.5*w < loX || 0.4*w > hiX && 0.5*w > loX
-                  ? Turn
-                  : GoStraight;
-    }
-}
-
-typedef std::vector<cv::Point> Polygon;
-typedef std::vector<Polygon> ContoursT;
 
 void Compute::BackgroundLoop() {
-    const double rho = 2., theta = 0.02;
-    const int minLineLength = cap->imageHeight / 3;
-
-    const double maxThresholdArea = cap->imageWidth * cap->imageHeight / 12;
-
     const int HoughThreshold = cap->imageWidth * cap->imageHeight / 6500;
-    const double HoughMaxGap = 25;
+    const int minLineLength = cap->imageHeight / 3;
+    const double maxGap = 25;
+    const double rho = 2., theta = 0.02;
 
-    cv::Mat bw(cap->imageHeight, cap->imageWidth, CV_8UC1);
-    cv::Mat lab[3];
-    static const int toGray[3*2] = {0,0, 0,1, 0,2};
-    std::vector<cv::Vec4f> newLines;
-    cv::Vec4f line;
-    double totalThreshold = 0., threshold = 0.;
-    int goodThresholdFrames = 0;
+    static double Hdata[3*3] = {
+         0.6675041881879467,    -0.6301258503975012,  49.80068082287637,
+        -0.006612602777747778,   0.7948226618810976,  -7.541413704343782,
+        -8.961567957315749e-05, -0.003982602759291037, 1,
+    };
+    const cv::Mat_<double> H(3, 3, Hdata);
+
+    const float mid = cap->imageWidth/2;
+    cv::Mat2f line(1, 2); cv::Vec2f* pLine = line[0];
+    cv::Mat bw;
 
     for (int i = 0; ! cap->imagesCaptured.quitting; ++i) {
         OutputData out;
         out.imageBefore = cap->imagesCaptured.Dequeue();
         if (! out.imageBefore.empty()) {
-
             if (log && i % 5 == 0 && log->imagesToLog.size < log->imagesToLog.Capacity()) {
                 log->imagesToLog.Enqueue(out.imageBefore);
             }
+            cv::cvtColor(out.imageBefore, bw, cv::COLOR_BGR2GRAY);
+            cv::Canny(bw, bw, 150., 180.);
+            cv::HoughLinesP(bw, out.lines, rho, theta, HoughThreshold, minLineLength, maxGap);
 
-            out.imageAfter = out.imageBefore.clone();
-            cv::Mat inp = out.imageAfter;//.rowRange(0, cap->imageHeight/2);
-            cv::cvtColor(inp, inp, cv::COLOR_BGR2Lab);
+            if (out.lines.empty()) {
+                out.angle = 0.;
+            } else {
+                std::vector<LineInfo> lines;
+                lines.reserve(out.lines.size());
+                for (Lines::iterator pl = out.lines.begin(); pl != out.lines.end(); ++pl) {
+                    cv::Vec4i& l = *pl;
+                    pLine[0] = cv::Vec2d(l[0], l[1]);
+                    pLine[1] = cv::Vec2d(l[2], l[3]);
 
-            if (seg == Threshold) {
-                static const int pickB[1*2] = {0,0};
-                cv::mixChannels(&inp, 1, &bw, 1, pickB, 1);
-                threshold = cv::threshold(bw, bw, 160, 255, 0 /*cv::THRESH_BINARY_INV|cv::THRESH_OTSU*/);
+                    cv::perspectiveTransform(line, line, H);
 
-                ContoursT contours;
-                cv::findContours(bw, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-                double area = 0.;
-                for (ContoursT::const_iterator p = contours.begin();
-                     area < maxThresholdArea && p != contours.end();
-                     ++p) {
-                    area += cv::contourArea(*p);
+                    if (pLine[0][1] > pLine[1][1]) {
+                        cv::Vec2f v = pLine[0];
+                        pLine[0] = pLine[1];
+                        pLine[1] = v;
+                    }
+                    LineInfo info;
+                    info.length = sqrt(square(pLine[0][0] - pLine[1][0]) + square(pLine[0][1] - pLine[1][1]));
+                    info.angle = mid <= pLine[0][0] && pLine[0][0] <= pLine[1][0]
+                              || mid >= pLine[0][0] && pLine[0][0] >= pLine[1][0]
+                              ? 0. : M_PI_2 - atan2(pLine[1][1], pLine[1][0] - pLine[0][0]);
+                    lines.push_back(info);
                 }
-                if (area < maxThresholdArea) {
-                    for (ContoursT::iterator p = contours.begin(); p != contours.end(); ++p) {
-                        Polygon& poly = *p;
-                        cv::fitLine(poly, line, cv::DIST_L2, 0., rho, theta);
-                        cv::Point p1(-9999*line(0) + line(2), -9999*line(1) + line(3)),
-                                  p2( 9999*line(0) + line(2),  9999*line(1) + line(3));
-                        cv::clipLine(cv::boundingRect(poly), p1, p2);
-                        out.lines.push_back(cv::Vec4i(p1.x, p1.y, p2.x, p2.y));
+                std::sort(lines.begin(), lines.end(), byAngle);
+
+                std::vector<LineInfo> clusters;
+                std::vector<LineInfo>::const_iterator l = lines.begin();
+                LineInfo info;
+                info.angle  = (*l).length * (*l).angle;
+                info.length = (*l).length;
+                while (++l != lines.end()) {
+                    if ((*l).angle - info.angle/info.length > 0.25) {
+                        clusters.push_back(info);
+                        info.angle  = 0.;
+                        info.length = 0.;
+                    }
+                    info.angle  += (*l).length * (*l).angle;
+                    info.length += (*l).length;
+                }
+                for (std::vector<LineInfo>::const_iterator l = clusters.begin(); l != clusters.end(); ++l) {
+                    if (info.length < (*l).length) {
+                        info.length = (*l).length;
+                        info.angle  = (*l).angle;
                     }
                 }
-
-                cv::mixChannels(&bw, 1, &inp, 1, toGray, 3);
-                cv::drawContours(out.imageAfter, contours, -1, cv::Scalar(0,255,0));
-            }
-            else {
-                cv::split(inp, lab);
-                for (int ab = 0; ab <= 0; ++ab) {
-                    cv::Canny(lab[ab], bw, 150., 180., 3);
-                    cv::HoughLinesP(bw, newLines, rho, theta, HoughThreshold, minLineLength, HoughMaxGap);
-                    out.lines.insert(out.lines.end(), newLines.begin(), newLines.end());
-                }
-
-                cv::mixChannels(&bw, 1, &inp, 1, toGray, 3);
+                out.angle = info.angle/info.length;
             }
 
-            std::sort(out.lines.begin(), out.lines.end(), longer);
-            out.direction = GoBack;
-            for (Lines::iterator l = out.lines.begin();
-                 out.direction != Turn && l != out.lines.end() && length2(*l) > square(minLineLength);
-                 ++l) {
-                out.UseLineForDirection(*l);
-            }
-            if (out.direction != GoBack && seg == Threshold) {
-                totalThreshold += threshold;
-                ++goodThresholdFrames;
-                if (thresholdCalibrating) {
-                    std::cerr << "threshold: " << threshold << std::endl;
-                }
-            }
+            if (outputPic) {
+#if 1
+                out.imageAfter = out.imageBefore;
+#else
+                cv::warpPerspective(out.imageBefore, out.imageAfter, H, out.imageBefore.size());
 
+                static const int toGray[3*2] = {0,0, 0,1, 0,2};
+                out.imageAfter.create(bw.rows, bw.cols, CV_8UC3);
+                cv::mixChannels(&bw, 1, &out.imageAfter, 1, toGray, 3);
+#endif
+            }
             SwapOutputData(out);
         }
-    }
-
-    if (goodThresholdFrames > 0) {
-        std::cerr << "average threshold: " << totalThreshold / goodThresholdFrames << std::endl;
     }
 }
 
@@ -155,7 +126,11 @@ void Compute::Stop() {
     pthread_join(thread, NULL);
 }
 
-Compute::Compute(VideoSource* c, ImageLogger* lg): cap(c), log(lg) {
+Compute::Compute(VideoSource* c, ImageLogger* lg, bool outPic)
+    : cap(c)
+    , log(lg)
+    , outputPic(outPic)
+{
     pthread_mutex_init(&dataMutex, NULL);
 }
 

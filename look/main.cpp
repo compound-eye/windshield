@@ -172,7 +172,7 @@ static char* RoverImageFileName() {
 
 static void Init(int& argc, char**argv) {
     cap = new Capture(RoverImageFileName(), cv::CAP_IMAGES);
-    //cap = new Capture("/home/haoyang/rover-images/2016-12-30-165058/%03d.png", cv::CAP_IMAGES);
+    //cap = new Capture("/home/haoyang/rover-images/2017-01-13-234547/%04d.png", cv::CAP_IMAGES);
     //cap = new Capture("/home/haoyang/rover-images/2016-12-30-165058/078.png", cv::CAP_FFMPEG);
     //cap = new Capture(0);
 
@@ -186,7 +186,7 @@ static void Init(int& argc, char**argv) {
     glewInit();
 
     view = new ImageView(cap->imageWidth, cap->imageHeight);
-    compute = new Compute(cap, NULL);
+    compute = new Compute(cap, NULL, true);
 
     cap->Start();
     compute->Start();

@@ -14,15 +14,12 @@ enum Direction {GoStraight, Turn, GoBack};
 struct OutputData {
     cv::Mat imageBefore, imageAfter;
     Lines lines;
-    Direction direction;
-    int loX, loY, hiX, hiY;
-
-    void UseLineForDirection(const cv::Vec4i& line);
+    float angle;
 };
 
 class Compute {
 public:
-    Compute(VideoSource* c, ImageLogger* lg);
+    Compute(VideoSource* c, ImageLogger* lg, bool outPic);
     ~Compute();
 
     void Start();
@@ -34,6 +31,7 @@ public:
 private:
     VideoSource* cap;
     ImageLogger* log;
+    bool outputPic;
     OutputData outputData;
     pthread_mutex_t dataMutex;
     pthread_t thread;

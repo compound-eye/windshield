@@ -50,6 +50,7 @@ void ImageView::Draw(const OutputData& data, int viewWidth, int viewHeight, cons
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
+    glLineWidth(1.);
     glColor3f(1., 1., 0.);
     glBegin(GL_LINES);
     for (Lines::const_iterator l = data.lines.begin(); l != data.lines.end(); ++l) {
@@ -58,14 +59,6 @@ void ImageView::Draw(const OutputData& data, int viewWidth, int viewHeight, cons
         glVertex2i(line[2], line[3]);
     }
     glEnd();
-
-    if (data.direction == Turn) {
-        glColor3f(1., 0., 0.);
-        glBegin(GL_LINES);
-            glVertex2i(data.loX, data.loY);
-            glVertex2i(data.hiX, data.hiY);
-        glEnd();
-    }
 
     if (mouse.down) {
         glColor3f(1., 1., 1.);
@@ -76,4 +69,11 @@ void ImageView::Draw(const OutputData& data, int viewWidth, int viewHeight, cons
             glVertex2i(mouse.x0, mouse.y1);
         glEnd();
     }
+
+    glLineWidth(2.);
+    glColor3f(1., 0., 0.);
+    glBegin(GL_LINES);
+        glVertex2f(w/2, 0.);
+        glVertex2f(w/2 + h * tan(data.angle), h);
+    glEnd();
 }

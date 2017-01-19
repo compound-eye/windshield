@@ -20,7 +20,7 @@ static void Quit(int) {
     quit = true;
 }
 
-static const int refreshRate = 30;
+static const int refreshRate = 40;
 
 int main(int /*argc*/, char** /*argv*/) {
     if (! check_apm()) {
@@ -28,7 +28,7 @@ int main(int /*argc*/, char** /*argv*/) {
 
         Capture cap(0);
         ImageLogger log;
-        Compute compute(&cap, &log);
+        Compute compute(&cap, &log, false);
         cap.Start();
         log.Start();
         compute.Start();
@@ -36,7 +36,6 @@ int main(int /*argc*/, char** /*argv*/) {
         Motor motor;
         Radio rc;
         Timer timer;
-        float steer = 0;
 
         signal(SIGHUP, Quit);
         signal(SIGINT, Quit);
@@ -46,28 +45,14 @@ int main(int /*argc*/, char** /*argv*/) {
             OutputData data;
             compute.SwapOutputData(data);
 
-            float throttle = rc.ReadThrottle();
-            float leftMotor, rightMotor;
-            if (data.direction == GoBack) {
-                throttle = std::min(0.75F, throttle);
-                if (steer > 0.) {
-                    leftMotor  = -throttle;
-                    rightMotor =  throttle;
-                } else {
-                    rightMotor = -throttle;
-                    leftMotor  =  throttle;
-                }
+            float throttle   = rc.ReadThrottle();
+            float leftMotor  = throttle;
+            float rightMotor = throttle;
+            float steer      = data.angle * (20. - 5.*throttle) + rc.ReadSteer();
+            if (steer < 0.) {
+                rightMotor *= 1. + std::max(-1.F, steer);
             } else {
-                if (data.direction == GoStraight) {
-                    leftMotor  = throttle;
-                    rightMotor = throttle;
-                } else {
-                    steer = rc.ReadSteer();
-                    //steer = (20. - 5.*throttle) * (M_PI_2 - atan2(data.hiY - data.loY, data.hiX - data.loX));
-                    //std::cerr << "steer = " << steer << std::endl;
-                    leftMotor  = steer > 0. ? (1. - std::min( 1.F,steer)) * throttle : throttle;
-                    rightMotor = steer < 0. ? (1. + std::max(-1.F,steer)) * throttle : throttle;
-                }
+                leftMotor  *= 1. - std::min( 1.F, steer);
             }
             motor.SetLeftMotor (leftMotor);
             motor.SetRightMotor(rightMotor);
