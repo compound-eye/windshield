@@ -33,6 +33,8 @@ void Compute::BackgroundLoop() {
     const cv::Mat_<double> H(3, 3, Hdata);
 
     const float mid = cap->imageWidth/2;
+    const int lookAhead = cap->imageHeight/2;
+
     cv::Mat2f line(1, 2); cv::Vec2f* pLine = line[0];
     cv::Mat bw;
 
@@ -47,23 +49,21 @@ void Compute::BackgroundLoop() {
             cv::Canny(bw, bw, 150., 180.);
             cv::HoughLinesP(bw, out.lines, rho, theta, HoughThreshold, minLineLength, maxGap);
 
-            if (out.lines.empty()) {
-                out.angle = 0.;
-            } else {
-                std::vector<LineInfo> lines;
-                lines.reserve(out.lines.size());
-                for (Lines::iterator pl = out.lines.begin(); pl != out.lines.end(); ++pl) {
-                    cv::Vec4i& l = *pl;
-                    pLine[0] = cv::Vec2d(l[0], l[1]);
-                    pLine[1] = cv::Vec2d(l[2], l[3]);
+            std::vector<LineInfo> lines;
+            lines.reserve(out.lines.size());
+            for (Lines::iterator pl = out.lines.begin(); pl != out.lines.end(); ++pl) {
+                cv::Vec4i& l = *pl;
+                pLine[0] = cv::Vec2d(l[0], l[1]);
+                pLine[1] = cv::Vec2d(l[2], l[3]);
 
-                    cv::perspectiveTransform(line, line, H);
+                cv::perspectiveTransform(line, line, H);
 
-                    if (pLine[0][1] > pLine[1][1]) {
-                        cv::Vec2f v = pLine[0];
-                        pLine[0] = pLine[1];
-                        pLine[1] = v;
-                    }
+                if (pLine[0][1] > pLine[1][1]) {
+                    cv::Vec2f v = pLine[0];
+                    pLine[0] = pLine[1];
+                    pLine[1] = v;
+                }
+                if (pLine[0][1] < lookAhead) {
                     LineInfo info;
                     info.length = sqrt(square(pLine[0][0] - pLine[1][0]) + square(pLine[0][1] - pLine[1][1]));
                     info.angle = mid <= pLine[0][0] && pLine[0][0] <= pLine[1][0]
@@ -71,6 +71,11 @@ void Compute::BackgroundLoop() {
                               ? 0. : M_PI_2 - atan2(pLine[1][1], pLine[1][0] - pLine[0][0]);
                     lines.push_back(info);
                 }
+            }
+            if (lines.empty()) {
+                out.angle = 0.;
+            }
+            else {
                 std::sort(lines.begin(), lines.end(), byAngle);
 
                 std::vector<LineInfo> clusters;
