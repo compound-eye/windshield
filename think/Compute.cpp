@@ -75,25 +75,24 @@ void Compute::BackgroundLoop() {
 
                 std::vector<LineInfo> clusters;
                 std::vector<LineInfo>::const_iterator l = lines.begin();
-                LineInfo info;
-                info.angle  = (*l).length * (*l).angle;
-                info.length = (*l).length;
+                LineInfo clusterInfo;
+                clusterInfo.angle  = (*l).length * (*l).angle;
+                clusterInfo.length = (*l).length;
                 while (++l != lines.end()) {
-                    if ((*l).angle - info.angle/info.length > 0.25) {
-                        clusters.push_back(info);
-                        info.angle  = 0.;
-                        info.length = 0.;
+                    if ((*l).angle - clusterInfo.angle/clusterInfo.length > 0.25) {
+                        clusters.push_back(clusterInfo);
+                        clusterInfo.angle  = 0.;
+                        clusterInfo.length = 0.;
                     }
-                    info.angle  += (*l).length * (*l).angle;
-                    info.length += (*l).length;
+                    clusterInfo.angle  += (*l).length * (*l).angle;
+                    clusterInfo.length += (*l).length;
                 }
                 for (std::vector<LineInfo>::const_iterator l = clusters.begin(); l != clusters.end(); ++l) {
-                    if (info.length < (*l).length) {
-                        info.length = (*l).length;
-                        info.angle  = (*l).angle;
+                    if (clusterInfo.length < (*l).length) {
+                        clusterInfo = *l;
                     }
                 }
-                out.angle = info.angle/info.length;
+                out.angle = clusterInfo.angle/clusterInfo.length;
             }
 
             if (outputPic) {
