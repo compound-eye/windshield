@@ -20,6 +20,13 @@ static bool byAngle(const LineInfo& v, const LineInfo& w) {
 }
 
 void Compute::BackgroundLoop() {
+#if 0
+    const double CannyThreshold1 = 150.; // warehouse
+    const double CannyThreshold2 = 180.;
+#else
+    const double CannyThreshold1 = 100.; // family room at night
+    const double CannyThreshold2 = 130.;
+#endif
     const int HoughThreshold = cap->imageWidth * cap->imageHeight / 6500;
     const int minLineLength = cap->imageHeight / 3;
     const double maxGap = 25;
@@ -33,7 +40,7 @@ void Compute::BackgroundLoop() {
     const cv::Mat_<double> H(3, 3, Hdata);
 
     const float mid = cap->imageWidth/2;
-    const int lookAhead = cap->imageHeight/2;
+    const int lookAhead = cap->imageHeight;
 
     cv::Mat2f line(1, 2); cv::Vec2f* pLine = line[0];
     cv::Mat bw;
@@ -46,7 +53,7 @@ void Compute::BackgroundLoop() {
                 log->imagesToLog.Enqueue(out.imageBefore);
             }
             cv::cvtColor(out.imageBefore, bw, cv::COLOR_BGR2GRAY);
-            cv::Canny(bw, bw, 150., 180.);
+            cv::Canny(bw, bw, CannyThreshold1, CannyThreshold2);
             cv::HoughLinesP(bw, out.lines, rho, theta, HoughThreshold, minLineLength, maxGap);
 
             std::vector<LineInfo> lines;
@@ -104,7 +111,7 @@ void Compute::BackgroundLoop() {
 #if 1
                 out.imageAfter = out.imageBefore;
 #else
-                cv::warpPerspective(out.imageBefore, out.imageAfter, H, out.imageBefore.size());
+                //cv::warpPerspective(out.imageBefore, out.imageAfter, H, out.imageBefore.size());
 
                 static const int toGray[3*2] = {0,0, 0,1, 0,2};
                 out.imageAfter.create(bw.rows, bw.cols, CV_8UC3);
