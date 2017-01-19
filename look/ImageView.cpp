@@ -42,10 +42,10 @@ void ImageView::Draw(const OutputData& data, int viewWidth, int viewHeight, cons
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_BGR, GL_UNSIGNED_BYTE, data.imageAfter.data);
 
     glBegin(GL_QUAD_STRIP);
-    glTexCoord2f(0., 1.);  glVertex2f(0, h);
-    glTexCoord2f(0., 0.);  glVertex2f(0, 0);
-    glTexCoord2f(1., 1.);  glVertex2f(w, h);
-    glTexCoord2f(1., 0.);  glVertex2f(w, 0);
+        glTexCoord2f(0., 1.);  glVertex2f(0, h);
+        glTexCoord2f(0., 0.);  glVertex2f(0, 0);
+        glTexCoord2f(1., 1.);  glVertex2f(w, h);
+        glTexCoord2f(1., 0.);  glVertex2f(w, 0);
     glEnd();
 
     glBindTexture(GL_TEXTURE_2D, 0);

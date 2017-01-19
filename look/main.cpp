@@ -77,20 +77,21 @@ static void LookAtPoint(const cv::Mat& image, int x, int y) {
 }
 
 static void LookAtRect(const cv::Mat& image, int x0, int y0, int x1, int y1) {
-    cv::Mat inp;
-    cv::cvtColor(cv::Mat(image, cv::Rect(std::min(x0,x1), std::min(y0,y1), std::abs(x0-x1), std::abs(y0-y1))),
-                 inp, cv::COLOR_BGR2Lab);
-    cv::Mat lab[3];
-    cv::split(inp, lab);
-    double otsu_L = cv::threshold(lab[0], lab[0], 128, 255, cv::THRESH_OTSU);
-    double otsu_a = cv::threshold(lab[1], lab[0], 128, 255, cv::THRESH_OTSU);
-    double otsu_b = cv::threshold(lab[2], lab[0], 128, 255, cv::THRESH_OTSU);
-    double  tri_L = cv::threshold(lab[0], lab[0], 128, 255, cv::THRESH_TRIANGLE);
-    double  tri_a = cv::threshold(lab[1], lab[0], 128, 255, cv::THRESH_TRIANGLE);
-    double  tri_b = cv::threshold(lab[2], lab[0], 128, 255, cv::THRESH_TRIANGLE);
-    std::cerr << "Otsu threshold on L:" << otsu_L << "a:" << otsu_a << " b:" << otsu_b << std::endl;
-    std::cerr << "Triangle threshold on L:" << otsu_a << "a:" << tri_a << " b:" << tri_b << std::endl;
-    std::cerr << std::endl;
+    cv::Mat inp(image, cv::Rect(std::min(x0,x1), std::min(y0,y1), std::abs(x0-x1), std::abs(y0-y1)));
+    if (! inp.empty()) {
+        cv::Mat m, lab[3];
+        cv::cvtColor(inp, m, cv::COLOR_BGR2Lab);
+        cv::split(m, lab);
+        double otsu_L = cv::threshold(lab[0], m, 128, 255, cv::THRESH_OTSU);
+        double otsu_a = cv::threshold(lab[1], m, 128, 255, cv::THRESH_OTSU);
+        double otsu_b = cv::threshold(lab[2], m, 128, 255, cv::THRESH_OTSU);
+        double  tri_L = cv::threshold(lab[0], m, 128, 255, cv::THRESH_TRIANGLE);
+        double  tri_a = cv::threshold(lab[1], m, 128, 255, cv::THRESH_TRIANGLE);
+        double  tri_b = cv::threshold(lab[2], m, 128, 255, cv::THRESH_TRIANGLE);
+        std::cerr << "Otsu threshold L:" << otsu_L << " a:" << otsu_a << " b:" << otsu_b << std::endl;
+        std::cerr << "Triangle threshold L:" << tri_L << " a:" << tri_a << " b:" << tri_b << std::endl;
+        std::cerr << std::endl;
+    }
 }
 
 static void MouseDrag(int x, int y) {
