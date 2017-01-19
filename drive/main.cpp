@@ -48,7 +48,7 @@ int main(int /*argc*/, char** /*argv*/) {
             float throttle   = rc.ReadThrottle();
             float leftMotor  = throttle;
             float rightMotor = throttle;
-            float steer      = data.angle * (20. - 5.*throttle) + rc.ReadSteer();
+            float steer      = data.angle * (20. - 5.*throttle) + 2.*rc.ReadSteer();
             if (steer < 0.) {
                 rightMotor *= 1. + std::max(-1.F, steer);
             } else {
