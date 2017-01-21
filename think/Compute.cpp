@@ -20,7 +20,7 @@ static bool byAngle(const LineInfo& v, const LineInfo& w) {
 }
 
 void Compute::BackgroundLoop() {
-#if 0
+#if 1
     const double CannyThreshold1 = 150.; // warehouse
     const double CannyThreshold2 = 180.;
 #else
