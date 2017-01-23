@@ -71,7 +71,11 @@ void ImageView::Draw(const OutputData& data, int viewWidth, int viewHeight, cons
     }
 
     glLineWidth(2.);
-    glColor3f(1., 0., 0.);
+    if (data.countFramesWithoutLines > 3) {
+        glColor3f(1., 0., 0.);
+    } else {
+        glColor3f(0., 1., 0.);
+    }
     glBegin(GL_LINES);
         glVertex2f(w/2, 0.);
         glVertex2f(w/2 + h * tan(data.angle), h);

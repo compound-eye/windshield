@@ -15,6 +15,7 @@ struct OutputData {
     cv::Mat imageBefore, imageAfter;
     Lines lines;
     float angle;
+    int countFramesWithoutLines;
 };
 
 class Compute {
@@ -32,6 +33,7 @@ private:
     VideoSource* cap;
     ImageLogger* log;
     bool outputPic;
+    int countFramesWithoutLines;
     OutputData outputData;
     pthread_mutex_t dataMutex;
     pthread_t thread;

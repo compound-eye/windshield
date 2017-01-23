@@ -20,13 +20,9 @@ static bool byAngle(const LineInfo& v, const LineInfo& w) {
 }
 
 void Compute::BackgroundLoop() {
-#if 1
-    const double CannyThreshold1 = 150.; // warehouse
-    const double CannyThreshold2 = 180.;
-#else
-    const double CannyThreshold1 = 100.; // family room at night
+    const double CannyThreshold1 = 100.;
     const double CannyThreshold2 = 130.;
-#endif
+
     const int HoughThreshold = cap->imageWidth * cap->imageHeight / 6500;
     const int minLineLength = cap->imageHeight / 3;
     const double maxGap = 25;
@@ -39,8 +35,8 @@ void Compute::BackgroundLoop() {
     };
     const cv::Mat_<double> H(3, 3, Hdata);
 
-    const float mid = cap->imageWidth/2;
-    const int lookAhead = cap->imageHeight;
+    const float midLeft  = 0.5 * cap->imageWidth;
+    const float midRight = 0.4 * cap->imageWidth;
 
     cv::Mat2f line(1, 2); cv::Vec2f* pLine = line[0];
     cv::Mat bw;
@@ -53,6 +49,7 @@ void Compute::BackgroundLoop() {
                 log->imagesToLog.Enqueue(out.imageBefore);
             }
             cv::cvtColor(out.imageBefore, bw, cv::COLOR_BGR2GRAY);
+            cv::blur(bw, bw, cv::Size(5,5));
             cv::Canny(bw, bw, CannyThreshold1, CannyThreshold2);
             cv::HoughLinesP(bw, out.lines, rho, theta, HoughThreshold, minLineLength, maxGap);
 
@@ -70,19 +67,20 @@ void Compute::BackgroundLoop() {
                     pLine[0] = pLine[1];
                     pLine[1] = v;
                 }
-                if (pLine[0][1] < lookAhead) {
-                    LineInfo info;
-                    info.length = sqrt(square(pLine[0][0] - pLine[1][0]) + square(pLine[0][1] - pLine[1][1]));
-                    info.angle = mid <= pLine[0][0] && pLine[0][0] <= pLine[1][0]
-                              || mid >= pLine[0][0] && pLine[0][0] >= pLine[1][0]
-                              ? 0. : M_PI_2 - atan2(pLine[1][1], pLine[1][0] - pLine[0][0]);
-                    lines.push_back(info);
-                }
+                LineInfo info;
+                info.length = sqrt(square(pLine[0][0] - pLine[1][0]) + square(pLine[0][1] - pLine[1][1]));
+                info.angle = midLeft  <= pLine[0][0] && pLine[0][0] <= pLine[1][0]
+                          || midRight >= pLine[0][0] && pLine[0][0] >= pLine[1][0]
+                          ? 0. : M_PI_2 - atan2(pLine[1][1], pLine[1][0] - pLine[0][0]);
+                lines.push_back(info);
             }
             if (lines.empty()) {
+                ++countFramesWithoutLines;
                 out.angle = 0.;
             }
             else {
+                countFramesWithoutLines = 0;
+
                 std::sort(lines.begin(), lines.end(), byAngle);
 
                 std::vector<LineInfo> clusters;
@@ -118,6 +116,8 @@ void Compute::BackgroundLoop() {
                 cv::mixChannels(&bw, 1, &out.imageAfter, 1, toGray, 3);
 #endif
             }
+
+            out.countFramesWithoutLines = countFramesWithoutLines;
             SwapOutputData(out);
         }
     }
@@ -141,6 +141,7 @@ Compute::Compute(VideoSource* c, ImageLogger* lg, bool outPic)
     : cap(c)
     , log(lg)
     , outputPic(outPic)
+    , countFramesWithoutLines(0)
 {
     pthread_mutex_init(&dataMutex, NULL);
 }
