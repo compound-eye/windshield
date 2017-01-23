@@ -3,9 +3,12 @@
 
 
 int main(int argc, char* argv[]) {
-    std::string home(getenv("HOME"));
+    char srcfile[200];
+    strcpy(srcfile, __FILE__);
+    std::string dir(srcfile, strrchr(srcfile,'/')+1);
 
-    cv::Mat image = cv::imread(home + "/windshield/birdeye/pic3.jpg");
+    cv::Mat image = cv::imread(dir + "pic3.jpg");
+
     cv::Size board(9, 6), dst(320, 240);
     double scale = double(image.size().width) / dst.width;
 
@@ -36,13 +39,14 @@ int main(int argc, char* argv[]) {
     cv::circle(image, img[2], 9, cv::Scalar(0, 0, 255), 3);
     cv::circle(image, img[3], 9, cv::Scalar(0,255,255), 3);
     cv::drawChessboardCorners(image, board, corners, found);
-    cv::imwrite(home + "/chessboard/pic-mark.jpg", image);
+    cv::imwrite(dir + "pic-mark.jpg", image);
 
     cv::Mat H = cv::getPerspectiveTransform(img, obj);
     std::cout << H << std::endl;
+
     cv::resize(image, image, dst);
     cv::warpPerspective(image, image, H, image.size());
-    cv::imwrite(home + "/chessboard/pic-top.jpg", image);
+    cv::imwrite(dir + "pic-top.jpg", image);
 
     return 0;
 }
