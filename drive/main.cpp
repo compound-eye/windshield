@@ -26,6 +26,14 @@ int main(int /*argc*/, char** /*argv*/) {
     if (! check_apm()) {
         system("sudo modprobe bcm2835-v4l2");
 
+        // The program runs in four threads. This way, the computer always has something to
+        // do while waiting for the next captured frame.
+        // . The Capture thread captures images from the camera.
+        // . The ImageLogger thread writes every 5th images on disk for later replay.
+        // . The Compute thread looks for lines in the image, and computes the steering angle.
+        // . Finally, here he main thread checks the latest steering angle periodically,
+        //   and adjusts the motor speeds accordingly.
+
         Capture cap(0);
         ImageLogger log;
         Compute compute(&cap, &log, false);

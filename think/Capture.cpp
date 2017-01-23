@@ -33,7 +33,7 @@ Capture::Capture(int device)
     }
 }
 
-Capture::Capture(const char* filename, int api)
+Capture::Capture(const cv::String& filename, int api)
     : cap(filename, api)
     , fps(videoFileFPS)
     , canDropFrame(false)

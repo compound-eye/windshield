@@ -154,7 +154,7 @@ static void Cleanup() {
     glDeleteSync(rendering); rendering = 0;
 }
 
-static char* RoverImageFileName() {
+static char* LatestRoverImages() {
     char roverImagesDir[150];
     sprintf(roverImagesDir, "%s/rover-images", getenv("HOME"));
 
@@ -172,10 +172,22 @@ static char* RoverImageFileName() {
 }
 
 static void Init(int& argc, char**argv) {
-    cap = new Capture(RoverImageFileName(), cv::CAP_IMAGES);
-    //cap = new Capture("/home/haoyang/rover-images/2017-01-13-234547/%04d.png", cv::CAP_IMAGES);
-    //cap = new Capture("/home/haoyang/rover-images/2016-12-30-165058/078.png", cv::CAP_FFMPEG);
+    std::string home = getenv("HOME");
+
+    // Uncomment one of these for capture lines to select the video source.
+
+    // Replay the latest image log from directory rover-images/
+    //cap = new Capture(LatestRoverImages(), cv::CAP_IMAGES);
+
+    // Start the replay at the exact frame.
+    cap = new Capture(home + "/rover-images/2017-01-21-race/0630.png", cv::CAP_IMAGES);
+
+    // Display one single frame.
+    //cap = new Capture(home + "/rover-images/2017-01-21-race/0851.png", cv::CAP_FFMPEG);
+
+    // Display directly from the camera live.
     //cap = new Capture(0);
+
 
     viewWidth  = cap->imageWidth;
     viewHeight = cap->imageHeight;

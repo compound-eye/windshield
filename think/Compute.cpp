@@ -28,6 +28,7 @@ void Compute::BackgroundLoop() {
     const double maxGap = 25;
     const double rho = 2., theta = 0.02;
 
+    // the matrix produced by birdeye program
     static double Hdata[3*3] = {
          0.6675041881879467,    -0.6301258503975012,  49.80068082287637,
         -0.006612602777747778,   0.7948226618810976,  -7.541413704343782,
@@ -45,12 +46,19 @@ void Compute::BackgroundLoop() {
         OutputData out;
         out.imageBefore = cap->imagesCaptured.Dequeue();
         if (! out.imageBefore.empty()) {
+
+            // Log every 5th images.
             if (log && i % 5 == 0 && log->imagesToLog.size < log->imagesToLog.Capacity()) {
                 log->imagesToLog.Enqueue(out.imageBefore);
             }
+
+            // Convert to grayscale.
             cv::cvtColor(out.imageBefore, bw, cv::COLOR_BGR2GRAY);
+            // Smooth it out.
             cv::blur(bw, bw, cv::Size(5,5));
+            // Detect edges.
             cv::Canny(bw, bw, CannyThreshold1, CannyThreshold2);
+            // Find line segments.
             cv::HoughLinesP(bw, out.lines, rho, theta, HoughThreshold, minLineLength, maxGap);
 
             std::vector<LineInfo> lines;
@@ -60,15 +68,22 @@ void Compute::BackgroundLoop() {
                 pLine[0] = cv::Vec2d(l[0], l[1]);
                 pLine[1] = cv::Vec2d(l[2], l[3]);
 
+                // See the line from bird's-eye view.
                 cv::perspectiveTransform(line, line, H);
 
+                // Make sure pLine[0].y <= pLine[1].y
+                // Smaller y => the point is closer to the bottom of the image.
                 if (pLine[0][1] > pLine[1][1]) {
                     cv::Vec2f v = pLine[0];
                     pLine[0] = pLine[1];
                     pLine[1] = v;
                 }
+
                 LineInfo info;
                 info.length = sqrt(square(pLine[0][0] - pLine[1][0]) + square(pLine[0][1] - pLine[1][1]));
+                // Estimate the steering angle needed to avoid this line.
+                // If the line occupies only one side of the image and points outward,
+                // set the steering angle to 0, to ignore the sideline and go staight ahead.
                 info.angle = midLeft  <= pLine[0][0] && pLine[0][0] <= pLine[1][0]
                           || midRight >= pLine[0][0] && pLine[0][0] >= pLine[1][0]
                           ? 0. : M_PI_2 - atan2(pLine[1][1], pLine[1][0] - pLine[0][0]);
@@ -81,6 +96,7 @@ void Compute::BackgroundLoop() {
             else {
                 countFramesWithoutLines = 0;
 
+                // Sort the lines by angle, then group them in clusters.
                 std::sort(lines.begin(), lines.end(), byAngle);
 
                 std::vector<LineInfo> clusters;
@@ -97,6 +113,8 @@ void Compute::BackgroundLoop() {
                     clusterInfo.angle  += (*l).length * (*l).angle;
                     clusterInfo.length += (*l).length;
                 }
+
+                // Pick the steering angle from the cluster with most lines (by length).
                 for (std::vector<LineInfo>::const_iterator l = clusters.begin(); l != clusters.end(); ++l) {
                     if (clusterInfo.length < (*l).length) {
                         clusterInfo = *l;
@@ -106,11 +124,15 @@ void Compute::BackgroundLoop() {
             }
 
             if (outputPic) {
+                // Uncomment one of the sections of the code to look at the images at various stages.
 #if 1
+                // Look at the image as captured.
                 out.imageAfter = out.imageBefore;
+#elif 1
+                // Look at the image from bird's-eye view.
+                cv::warpPerspective(out.imageBefore, out.imageAfter, H, out.imageBefore.size());
 #else
-                //cv::warpPerspective(out.imageBefore, out.imageAfter, H, out.imageBefore.size());
-
+                // Look at the edges in the image.
                 static const int toGray[3*2] = {0,0, 0,1, 0,2};
                 out.imageAfter.create(bw.rows, bw.cols, CV_8UC3);
                 cv::mixChannels(&bw, 1, &out.imageAfter, 1, toGray, 3);
