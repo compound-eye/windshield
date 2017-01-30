@@ -91,8 +91,9 @@ Our goal is simply to drive between the lines. Our algorithm reduces to:
 
 No, it's not very complicated. KISS.
 
-Note:
-1, The default is to drive straight. If we fail to see the edge of the road, we roll off the track and keep going, until we see something else that looks like a lane marker.
+Notes:
+
+1. The default is to drive straight. If we fail to see the edge of the road, we roll off the track and keep going, until we see something else that looks like a lane marker.
 2. We don’t care about lines to our side that we’re not in danger of crossing; in particular we don’t try to hug our lane.
 
 ###Finding Lines
