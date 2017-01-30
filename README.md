@@ -43,7 +43,10 @@ directory: https://github.com/compound-eye/windshield/blob/master/birdeye/pic3.j
 Replace `birdeye/pic3.jpg` with the picture you just took. Run `birdeye`. Copy the output matrix to the variable `Hdata` in
 `think/Compute.cpp`.
 
-### Drive
+If your camera has a different resolution than 320x240, change the variable `dst` in `birdeye.cpp` to reflect that. When you
+take the chessboard picture, use the highest resolution available on the camera, and let `birdeye` scale it down.
+
+## Drive
 On Raspbery Pi 3, create the directory `rover-images` under the home directory. The drive program will save every 5th images
 from the camera in `rover-images`.
 
