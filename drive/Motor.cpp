@@ -1,7 +1,10 @@
 #include "Motor.h"
-#include <pigpio.h>
 #include <cmath>
 #include <iostream>
+extern "C" {
+  #include "RPIO/c_gpio/c_gpio.h"
+  #include "RPIO/c_pwm/pwm.h"
+}
 
 static const int pinRightPWM = 14;
 static const int pinRight1   = 10;
@@ -10,30 +13,38 @@ static const int pinLeftPWM  = 24;
 static const int pinLeft1    = 17;
 static const int pinLeft2    =  4;
 
+static const int DMA = 0;
+
 Motor::Motor() {
-  gpioInitialise();
+  gpio_setup();
 
-  gpioSetPWMfrequency(pinRightPWM, 500); gpioSetPWMrange(pinRightPWM, 10000);
-  gpioSetPWMfrequency(pinLeftPWM,  500); gpioSetPWMrange(pinLeftPWM,  10000);
+  set_loglevel(LOG_LEVEL_ERRORS);
+  pwm_setup(PULSE_WIDTH_INCREMENT_GRANULARITY_US_DEFAULT, DELAY_VIA_PWM);
+  init_channel(DMA, SUBCYCLE_TIME_US_DEFAULT);
 
-  gpioSetMode(pinRight1, PI_OUTPUT);
-  gpioSetMode(pinRight2, PI_OUTPUT);
-  gpioSetMode(pinLeft1,  PI_OUTPUT);
-  gpioSetMode(pinLeft2,  PI_OUTPUT);
+  setup_gpio(pinRight1, OUTPUT, 0);
+  setup_gpio(pinRight2, OUTPUT, 0);
+  setup_gpio(pinLeft1,  OUTPUT, 0);
+  setup_gpio(pinLeft2,  OUTPUT, 0);
 }
 
 Motor::~Motor() {
-  gpioTerminate();
+  shutdown();
+  cleanup();
+}
+
+static int PulseWidth(float v) {
+  return fabs(v) * get_channel_subcycle_time_us(DMA) / get_pulse_incr_us();
 }
 
 void Motor::SetLeftMotor(float v) {
-  gpioPWM(pinLeftPWM, 10000. * fabs(v));
-  gpioWrite(pinLeft1, v <  0.);
-  gpioWrite(pinLeft2, v >= 0.);
+  add_channel_pulse(DMA, pinLeftPWM, 0, PulseWidth(v));
+  output_gpio(pinLeft1, v <  0.);
+  output_gpio(pinLeft2, v >= 0.);
 }
 
 void Motor::SetRightMotor(float v) {
-  gpioPWM(pinRightPWM, 10000. * fabs(v));
-  gpioWrite(pinRight1, v <  0.);
-  gpioWrite(pinRight2, v >= 0.);
+  add_channel_pulse(DMA, pinRightPWM, 0, PulseWidth(v));
+  output_gpio(pinRight1, v <  0.);
+  output_gpio(pinRight2, v >= 0.);
 }

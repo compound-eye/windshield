@@ -13,9 +13,11 @@ add_executable(${PROJECT_NAME}
                ../think/queue.h
                Navio/PWM.cpp
                Navio/RCInput.cpp
-               Navio/Util.cpp)
+               Navio/Util.cpp
+               RPIO/c_gpio/c_gpio.c
+               RPIO/c_pwm/pwm.c
+               RPIO/c_pwm/mailbox.c)
 
 target_link_libraries(${PROJECT_NAME}
-                      pigpio
                       pthread
                       ${OpenCV_LIBS})
