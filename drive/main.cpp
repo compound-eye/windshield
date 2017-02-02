@@ -31,7 +31,7 @@ int main(int /*argc*/, char** /*argv*/) {
         // . The Capture thread captures images from the camera.
         // . The ImageLogger thread writes every 5th images on disk for later replay.
         // . The Compute thread looks for lines in the image, and computes the steering angle.
-        // . Finally, here he main thread checks the latest steering angle periodically,
+        // . Finally, here the main thread checks the latest steering angle periodically,
         //   and adjusts the motor speeds accordingly.
 
         Capture cap(0);
