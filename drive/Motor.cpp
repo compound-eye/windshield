@@ -1,38 +1,39 @@
 #include "Motor.h"
+#include <pigpio.h>
+#include <cmath>
+#include <iostream>
 
-
-static const int chTiltCamera = 0;
-static const int chLeftMotor  = 1;
-static const int chRightMotor = 2;
-static const int chPanCamera  = 3;
-
-static const float outMin     = 1.;
-static const float outNeutral = 1.5;
-static const float outMax     = 2.;
-
-static void InitPWMChannel(PWM& pwm, int ch) {
-    pwm.init(ch);
-    pwm.enable(ch);
-    pwm.set_period(ch, 50);
-}
+static const int pinRightPWM = 14;
+static const int pinRight1   = 10;
+static const int pinRight2   = 25;
+static const int pinLeftPWM  = 24;
+static const int pinLeft1    = 17;
+static const int pinLeft2    =  4;
 
 Motor::Motor() {
-    InitPWMChannel(pwm, chLeftMotor);
-    InitPWMChannel(pwm, chRightMotor);
-    InitPWMChannel(pwm, chTiltCamera);
-    InitPWMChannel(pwm, chPanCamera);
+  gpioInitialise();
 
-    pwm.set_duty_cycle(chLeftMotor,  outNeutral);
-    pwm.set_duty_cycle(chRightMotor, outNeutral);
-    pwm.set_duty_cycle(chPanCamera,  outNeutral);
-    pwm.set_duty_cycle(chTiltCamera, 1.);
-    pwm.set_duty_cycle(chPanCamera, 1.47);
+  gpioSetPWMfrequency(pinRightPWM, 500); gpioSetPWMrange(pinRightPWM, 10000);
+  gpioSetPWMfrequency(pinLeftPWM,  500); gpioSetPWMrange(pinLeftPWM,  10000);
+
+  gpioSetMode(pinRight1, PI_OUTPUT);
+  gpioSetMode(pinRight2, PI_OUTPUT);
+  gpioSetMode(pinLeft1,  PI_OUTPUT);
+  gpioSetMode(pinLeft2,  PI_OUTPUT);
+}
+
+Motor::~Motor() {
+  gpioTerminate();
 }
 
 void Motor::SetLeftMotor(float v) {
-    pwm.set_duty_cycle(chLeftMotor, v * (outMax - outNeutral) + outNeutral);
+  gpioPWM(pinLeftPWM, 10000. * fabs(v));
+  gpioWrite(pinLeft1, v <  0.);
+  gpioWrite(pinLeft2, v >= 0.);
 }
 
 void Motor::SetRightMotor(float v) {
-    pwm.set_duty_cycle(chRightMotor, v * (outMax - outNeutral) + outNeutral);
+  gpioPWM(pinRightPWM, 10000. * fabs(v));
+  gpioWrite(pinRight1, v <  0.);
+  gpioWrite(pinRight2, v >= 0.);
 }

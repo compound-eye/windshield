@@ -16,5 +16,6 @@ add_executable(${PROJECT_NAME}
                Navio/Util.cpp)
 
 target_link_libraries(${PROJECT_NAME}
+                      pigpio
                       pthread
                       ${OpenCV_LIBS})
