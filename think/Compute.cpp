@@ -20,9 +20,6 @@ static bool byAngle(const LineInfo& v, const LineInfo& w) {
 }
 
 void Compute::BackgroundLoop() {
-    const double CannyThreshold1 = 100.;
-    const double CannyThreshold2 = 130.;
-
     const int HoughThreshold = cap->imageWidth * cap->imageHeight / 6500;
     const int minLineLength = cap->imageHeight / 3;
     const double maxGap = 25;
@@ -40,7 +37,8 @@ void Compute::BackgroundLoop() {
     const float midRight = 0.4 * cap->imageWidth;
 
     cv::Mat2f line(1, 2); cv::Vec2f* pLine = line[0];
-    cv::Mat bw;
+    cv::Mat bw(cap->imageHeight, cap->imageWidth, CV_8UC1);
+    static const int toGray[3*2] = {0,0, 0,1, 0,2};
 
     for (int i = 0; ! cap->imagesCaptured.quitting; ++i) {
         OutputData out;
@@ -52,8 +50,24 @@ void Compute::BackgroundLoop() {
                 log->imagesToLog.Enqueue(out.imageBefore);
             }
 
+#if 0
+            const double CannyThreshold1 = 100.;
+            const double CannyThreshold2 = 130.;
+
             // Convert to grayscale.
             cv::cvtColor(out.imageBefore, bw, cv::COLOR_BGR2GRAY);
+#else
+            const double CannyThreshold1 = 10.;
+            const double CannyThreshold2 = 40.;
+
+            // Convert to Lab color space and use the a channel for red-green differentiation.
+            cv::cvtColor(out.imageBefore, out.imageAfter, cv::COLOR_BGR2Lab);
+            static const int pick1[2] = {1,0};
+            cv::mixChannels(&out.imageAfter, 1, &bw, 1, pick1, 1);
+            if (outputPic) {
+                cv::mixChannels(&bw, 1, &out.imageAfter, 1, toGray, 3);
+            }
+#endif
             // Smooth it out.
             cv::blur(bw, bw, cv::Size(5,5));
             // Detect edges.
@@ -125,15 +139,14 @@ void Compute::BackgroundLoop() {
 
             if (outputPic) {
                 // Uncomment one of the sections of the code to look at the images at various stages.
-#if 1
+#if 0
                 // Look at the image as captured.
                 out.imageAfter = out.imageBefore;
-#elif 1
+#elif 0
                 // Look at the image from bird's-eye view.
                 cv::warpPerspective(out.imageBefore, out.imageAfter, H, out.imageBefore.size());
-#else
+#elif 0
                 // Look at the edges in the image.
-                static const int toGray[3*2] = {0,0, 0,1, 0,2};
                 out.imageAfter.create(bw.rows, bw.cols, CV_8UC3);
                 cv::mixChannels(&bw, 1, &out.imageAfter, 1, toGray, 3);
 #endif

@@ -180,7 +180,7 @@ static void Init(int& argc, char**argv) {
     //cap = new Capture(LatestRoverImages(), cv::CAP_IMAGES);
 
     // Start the replay at the exact frame.
-    cap = new Capture(home + "/rover-images/2017-01-21-race/0630.png", cv::CAP_IMAGES);
+    cap = new Capture(home + "/rover-images/2017-01-14-000650/0000.png", cv::CAP_IMAGES);
 
     // Display one single frame.
     //cap = new Capture(home + "/rover-images/2017-01-21-race/0851.png", cv::CAP_FFMPEG);
