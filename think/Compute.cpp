@@ -25,12 +25,23 @@ void Compute::BackgroundLoop() {
     const double maxGap = 25;
     const double rho = 2., theta = 0.02;
 
+#if 0
     // the matrix produced by birdeye program
+    // from Big Black's perspective
     static double Hdata[3*3] = {
          0.6675041881879467,    -0.6301258503975012,  49.80068082287637,
         -0.006612602777747778,   0.7948226618810976,  -7.541413704343782,
         -8.961567957315749e-05, -0.003982602759291037, 1,
     };
+#else
+    // the matrix produced by birdeye program
+    // from Little Red's perspective
+    static double Hdata[3*3] = {
+         0.4513919006399383,    -1.037997279631599,   92.8750042050238,
+         0.01436830677576661,    1.012880355618067,  -51.75814532765207,
+        -3.741434753556324e-05, -0.006068161781988246, 1,
+    };
+#endif
     const cv::Mat_<double> H(3, 3, Hdata);
 
     const float midLeft  = 0.5 * cap->imageWidth;
