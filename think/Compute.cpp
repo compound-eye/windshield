@@ -67,13 +67,24 @@ void Compute::BackgroundLoop() {
 
             // Convert to grayscale.
             cv::cvtColor(out.imageBefore, bw, cv::COLOR_BGR2GRAY);
-#else
+#elif 0
             const double CannyThreshold1 = 10.;
             const double CannyThreshold2 = 40.;
 
             // Convert to Lab color space and use the a channel for red-green differentiation.
             cv::cvtColor(out.imageBefore, out.imageAfter, cv::COLOR_BGR2Lab);
             static const int pick1[2] = {1,0};
+            cv::mixChannels(&out.imageAfter, 1, &bw, 1, pick1, 1);
+            if (outputPic) {
+                cv::mixChannels(&bw, 1, &out.imageAfter, 1, toGray, 3);
+            }
+#else
+            const double CannyThreshold1 = 150.;
+            const double CannyThreshold2 = 180.;
+
+            // Convert to Lab color space and use the b channel for blue-yellow differentiation.
+            cv::cvtColor(out.imageBefore, out.imageAfter, cv::COLOR_BGR2Lab);
+            static const int pick1[2] = {2,0};
             cv::mixChannels(&out.imageAfter, 1, &bw, 1, pick1, 1);
             if (outputPic) {
                 cv::mixChannels(&bw, 1, &out.imageAfter, 1, toGray, 3);
