@@ -79,8 +79,8 @@ void Compute::BackgroundLoop() {
                 cv::mixChannels(&bw, 1, &out.imageAfter, 1, toGray, 3);
             }
 #else
-            const double CannyThreshold1 = 150.;
-            const double CannyThreshold2 = 180.;
+            const double CannyThreshold1 = 10.;
+            const double CannyThreshold2 = 15.;
 
             // Convert to Lab color space and use the b channel for blue-yellow differentiation.
             cv::cvtColor(out.imageBefore, out.imageAfter, cv::COLOR_BGR2Lab);
