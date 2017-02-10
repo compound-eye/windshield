@@ -53,10 +53,10 @@ int main(int /*argc*/, char** /*argv*/) {
             OutputData data;
             compute.SwapOutputData(data);
 
-            float throttle   = 1.; //rc.ReadThrottle();
+            float throttle   = 0.7; //rc.ReadThrottle();
             float leftMotor  = throttle;
             float rightMotor = throttle;
-            float steer      = data.angle * (20. - 5.*throttle); //+ 2.*rc.ReadSteer();
+            float steer      = 0.5 * data.angle; //+ 2.*rc.ReadSteer();
             if (steer < 0.) {
                 rightMotor *= 1. + std::max(-1.F, steer);
             } else {

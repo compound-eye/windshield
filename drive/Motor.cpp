@@ -38,7 +38,7 @@ static int PulseWidth(float v) {
 }
 
 void Motor::SetLeftMotor(float v) {
-  add_channel_pulse(DMA, pinLeftPWM, 0, PulseWidth(v));
+  add_channel_pulse(DMA, pinLeftPWM, 0, PulseWidth(0.6*v));
   output_gpio(pinLeft1, v <  0.);
   output_gpio(pinLeft2, v >= 0.);
 }
