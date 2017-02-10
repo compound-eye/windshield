@@ -125,8 +125,13 @@ static void MouseClick(int /*button*/, int state, int x, int y) {
 }
 
 static void Keyboard(unsigned char key, int /*x*/, int /*y*/) {
-    if (key == ' ') {
+    switch (key) {
+    case ' ':
         cap->commands.Enqueue(cap->playing ? VideoSource::Pause : VideoSource::Play);
+        break;
+    case 's': case 'S':
+        cap->commands.Enqueue(VideoSource::Snapshot);
+        break;
     }
 }
 

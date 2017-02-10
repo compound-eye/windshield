@@ -95,7 +95,7 @@ void Compute::BackgroundLoop() {
             // Detect edges.
             cv::Canny(bw, bw, CannyThreshold1, CannyThreshold2);
             // Find line segments.
-            cv::HoughLinesP(bw.rowRange(0, 0.4*cap->imageHeight), out.lines, rho, theta, HoughThreshold, minLineLength, maxGap);
+            cv::HoughLinesP(bw.rowRange(0, 0.5*cap->imageHeight), out.lines, rho, theta, HoughThreshold, minLineLength, maxGap);
 
             std::vector<LineInfo> lines;
             lines.reserve(out.lines.size());

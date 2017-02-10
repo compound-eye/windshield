@@ -5,6 +5,8 @@
 #include <opencv2/videoio.hpp>
 
 
+class ImageLogger;
+
 class Capture : public VideoSource {
 public:
     Capture(int device);
@@ -18,8 +20,11 @@ public:
 private:
     pthread_t thread;
     cv::VideoCapture cap;
+    cv::Ptr<ImageLogger> log;
     const int fps;
     bool canDropFrame;
+
+    void StartLog();
 };
 
 #endif // CAPTURE_H

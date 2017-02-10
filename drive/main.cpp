@@ -35,7 +35,7 @@ int main(int /*argc*/, char** /*argv*/) {
         //   and adjusts the motor speeds accordingly.
 
         Capture cap(0);
-        ImageLogger log;
+        ImageLogger log("/home/pi/rover-images");
         Compute compute(&cap, &log, false);
         cap.Start();
         log.Start();

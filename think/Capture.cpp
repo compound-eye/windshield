@@ -1,4 +1,5 @@
 #include "Capture.h"
+#include "ImageLogger.h"
 #include "Timer.h"
 #include <iostream>
 #include <time.h>
@@ -44,6 +45,14 @@ Capture::Capture(const cv::String& filename, int api)
     imageHeight = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
 }
 
+void Capture::StartLog() {
+    if (log.empty()) {
+        ImageLogger* pLog = new ImageLogger(std::string(getenv("HOME")) + "/Pictures");
+        pLog->Start();
+        log.reset(pLog);
+    }
+}
+
 void Capture::BackgroundLoop() {
     cv::Mat image;
     int frameCount = 0;
@@ -65,6 +74,11 @@ void Capture::BackgroundLoop() {
                 cap.set(cv::CAP_PROP_POS_FRAMES, prev);
             }
           } break;
+        case Snapshot:
+            StartLog();
+            log->imagesToLog.Enqueue(image);
+            playThisFrame = playing;
+            break;
         default:
             playThisFrame = playing;
             break;
@@ -106,4 +120,8 @@ void Capture::Start() {
 void Capture::Stop() {
     commands.Quit();
     pthread_join(thread, NULL);
+
+    if (! log.empty()) {
+        log->Stop();
+    }
 }

@@ -9,7 +9,7 @@ class Timer;
 
 class VideoSource {
 public:
-    enum Command {Noop, Play, Pause, Rewind, NextFrame, PrevFrame};
+    enum Command {Noop, Play, Pause, Rewind, NextFrame, PrevFrame, Snapshot};
 
     int imageWidth, imageHeight;
     Queue<cv::Mat,1> imagesCaptured;

@@ -10,9 +10,8 @@ void ImageLogger::BackgroundLoop() {
     time_t now = time(NULL);
     strftime(fname, sizeof fname, "/%F-%H%M%S", localtime(&now));
 
-    static const char* pathLogHomeDir = "/home/pi/rover-images";
-    mkdir(pathLogHomeDir, ACCESSPERMS);
-    std::string pathLogDir = std::string(pathLogHomeDir) + fname;
+    mkdir(logDir.c_str(), ACCESSPERMS);
+    std::string pathLogDir = logDir + fname;
     mkdir(pathLogDir.c_str(), ACCESSPERMS);
 
     for (int i = 0; ! imagesToLog.quitting; ++i) {
