@@ -67,7 +67,7 @@ void Compute::BackgroundLoop() {
 
             // Convert to grayscale.
             cv::cvtColor(out.imageBefore, bw, cv::COLOR_BGR2GRAY);
-#elif 0
+#elif 1
             const double CannyThreshold1 = 10.;
             const double CannyThreshold2 = 40.;
 
@@ -95,7 +95,8 @@ void Compute::BackgroundLoop() {
             // Detect edges.
             cv::Canny(bw, bw, CannyThreshold1, CannyThreshold2);
             // Find line segments.
-            cv::HoughLinesP(bw.rowRange(0, 0.5*cap->imageHeight), out.lines, rho, theta, HoughThreshold, minLineLength, maxGap);
+            cv::HoughLinesP(bw/*.rowRange(0, 0.5*cap->imageHeight)*/,
+                            out.lines, rho, theta, HoughThreshold, minLineLength, maxGap);
 
             std::vector<LineInfo> lines;
             lines.reserve(out.lines.size());
