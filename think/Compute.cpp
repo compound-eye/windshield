@@ -1,4 +1,5 @@
 #include "Compute.h"
+#include "CameraCalibrations.h"
 #include "ImageLogger.h"
 #include "VideoSource.h"
 #include <iostream>
@@ -25,31 +26,17 @@ void Compute::BackgroundLoop() {
     const double maxGap = 25;
     const double rho = 2., theta = 0.02;
 
-#if 0
-    // the matrix produced by birdeye program
-    // from Big Black's perspective
-    static double Hdata[3*3] = {
-         0.6675041881879467,    -0.6301258503975012,  49.80068082287637,
-        -0.006612602777747778,   0.7948226618810976,  -7.541413704343782,
-        -8.961567957315749e-05, -0.003982602759291037, 1,
-    };
-#else
-    // the matrix produced by birdeye program
-    // from Little Zero's perspective
-    static double Hdata[3*3] = {
-         0.4904558649593599,    -1.09346227446655,    86.73844331575903,
-        -0.008612121677541046,   1.028247043505125,  -44.28463737910742,
-         0.0001295820144290542, -0.006700645296784983, 1,
-    };
-#endif
-    const cv::Mat_<double> H(3, 3, Hdata);
-
     const float midLeft  = 0.5 * cap->imageWidth;
     const float midRight = 0.4 * cap->imageWidth;
 
     cv::Mat2f line(1, 2); cv::Vec2f* pLine = line[0];
     cv::Mat bw(cap->imageHeight, cap->imageWidth, CV_8UC1);
     static const int toGray[3*2] = {0,0, 0,1, 0,2};
+
+    cv::Mat map1, map2;
+    cv::initUndistortRectifyMap(intrinsic, distortion, cv::Mat(), intrinsic,
+                                cv::Size(cap->imageWidth, cap->imageHeight), CV_16SC2,
+                                map1, map2);
 
     for (int i = 0; ! cap->imagesCaptured.quitting; ++i) {
         OutputData out;
@@ -90,6 +77,8 @@ void Compute::BackgroundLoop() {
                 cv::mixChannels(&bw, 1, &out.imageAfter, 1, toGray, 3);
             }
 #endif
+            // Undistortion
+            cv::remap(bw, bw, map1, map2, cv::INTER_LINEAR);
             // Smooth it out.
             cv::blur(bw, bw, cv::Size(5,5));
             // Detect edges.
@@ -105,7 +94,7 @@ void Compute::BackgroundLoop() {
                 pLine[1] = cv::Vec2d(l[2], l[3]);
 
                 // See the line from bird's-eye view.
-                cv::perspectiveTransform(line, line, H);
+                cv::perspectiveTransform(line, line, perspective);
 
                 // Make sure pLine[0].y <= pLine[1].y
                 // Smaller y => the point is closer to the bottom of the image.

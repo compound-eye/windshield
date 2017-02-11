@@ -1,3 +1,5 @@
+#include "CameraCalibrations.h"
+
 #include <opencv2/opencv.hpp>
 #include <iostream>
 
@@ -7,7 +9,11 @@ int main(int argc, char* argv[]) {
     strcpy(srcfile, __FILE__);
     std::string dir(srcfile, strrchr(srcfile,'/')+1);
 
-    cv::Mat image = cv::imread(dir + "pic0.jpg");
+    cv::Mat image0 = cv::imread(dir + "pic0.jpg"), image;
+
+    cv::Mat k = intrinsic * (image0.cols / 320.);
+    k.at<double>(2, 2) = 1.;
+    cv::undistort(image0, image, k, distortion);
 
     cv::Size board(9, 6), dst(320, 240);
     double scale = double(image.size().width) / dst.width;
