@@ -61,7 +61,7 @@ void Compute::BackgroundLoop() {
                 log->imagesToLog.Enqueue(out.imageBefore);
             }
 
-#if 0
+#if 1
             const double CannyThreshold1 = 100.;
             const double CannyThreshold2 = 130.;
 
@@ -69,7 +69,7 @@ void Compute::BackgroundLoop() {
             cv::cvtColor(out.imageBefore, bw, cv::COLOR_BGR2GRAY);
 #elif 1
             const double CannyThreshold1 = 10.;
-            const double CannyThreshold2 = 40.;
+            const double CannyThreshold2 = 23.;
 
             // Convert to Lab color space and use the a channel for red-green differentiation.
             cv::cvtColor(out.imageBefore, out.imageAfter, cv::COLOR_BGR2Lab);
@@ -95,7 +95,7 @@ void Compute::BackgroundLoop() {
             // Detect edges.
             cv::Canny(bw, bw, CannyThreshold1, CannyThreshold2);
             // Find line segments.
-            cv::HoughLinesP(bw/*.rowRange(0, 0.5*cap->imageHeight)*/,
+            cv::HoughLinesP(bw.rowRange(0, 0.5*cap->imageHeight),
                             out.lines, rho, theta, HoughThreshold, minLineLength, maxGap);
 
             std::vector<LineInfo> lines;
@@ -162,7 +162,7 @@ void Compute::BackgroundLoop() {
 
             if (outputPic) {
                 // Uncomment one of the sections of the code to look at the images at various stages.
-#if 0
+#if 1
                 // Look at the image as captured.
                 out.imageAfter = out.imageBefore;
 #elif 0
