@@ -11,9 +11,6 @@ aux_source_directory(../think SRC_LIST)
 add_executable(${PROJECT_NAME}
                ${SRC_LIST}
                ../think/queue.h
-               Navio/PWM.cpp
-               Navio/RCInput.cpp
-               Navio/Util.cpp
                RPIO/c_gpio/c_gpio.c
                RPIO/c_pwm/pwm.c
                RPIO/c_pwm/mailbox.c)

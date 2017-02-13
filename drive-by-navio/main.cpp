@@ -42,7 +42,7 @@ int main(int /*argc*/, char** /*argv*/) {
         compute.Start();
 
         Motor motor;
-        //Radio rc;
+        Radio rc;
         Timer timer;
 
         signal(SIGHUP, Quit);
@@ -53,10 +53,10 @@ int main(int /*argc*/, char** /*argv*/) {
             OutputData data;
             compute.SwapOutputData(data);
 
-            float throttle   = 0.4; //rc.ReadThrottle();
+            float throttle   = rc.ReadThrottle();
             float leftMotor  = throttle;
             float rightMotor = throttle;
-            float steer      = 0.45 * data.angle; //+ 2.*rc.ReadSteer();
+            float steer      = data.angle * (20. - 5.*throttle) + 2.*rc.ReadSteer();
             if (steer < 0.) {
                 rightMotor *= 1. + std::max(-1.F, steer);
             } else {
