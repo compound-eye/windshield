@@ -26,6 +26,13 @@ int main(int /*argc*/, char** /*argv*/) {
     if (! check_apm()) {
         system("sudo modprobe bcm2835-v4l2");
 
+        // the matrix produced by birdeye program
+        static double perspective[3*3] = {
+             0.6675041881879467,    -0.6301258503975012,  49.80068082287637,
+            -0.006612602777747778,   0.7948226618810976,  -7.541413704343782,
+            -8.961567957315749e-05, -0.003982602759291037, 1,
+        };
+
         // The program runs in four threads. This way, the computer always has something to
         // do while waiting for the next captured frame.
         // . The Capture thread captures images from the camera.
@@ -36,7 +43,7 @@ int main(int /*argc*/, char** /*argv*/) {
 
         Capture cap(0);
         ImageLogger log("/home/pi/rover-images");
-        Compute compute(&cap, &log, false);
+        Compute compute(&cap, &log, cv::Mat1d(3, 3, perspective), false);
         cap.Start();
         log.Start();
         compute.Start();

@@ -1,7 +1,7 @@
 #ifndef COMPUTE_H
 #define COMPUTE_H
 
-#include <opencv2/core.hpp>
+#include "RoverParms.h"
 
 class ImageLogger;
 class VideoSource;
@@ -20,7 +20,7 @@ struct OutputData {
 
 class Compute {
 public:
-    Compute(VideoSource* c, ImageLogger* lg, bool outPic);
+    Compute(VideoSource* cap, ImageLogger* log, const cv::Mat& perspective, bool outPic);
     ~Compute();
 
     void Start();
@@ -32,6 +32,7 @@ public:
 private:
     VideoSource* cap;
     ImageLogger* log;
+    RoverParms parms;
     bool outputPic;
     int countFramesWithoutLines;
     OutputData outputData;

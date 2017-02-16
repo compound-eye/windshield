@@ -4,20 +4,22 @@
 #include <time.h>
 
 
-void ImageLogger::BackgroundLoop() {
-    char fname[100];
-
+ImageLogger::ImageLogger(const std::string& parentPath) {
+    char dname[100];
     time_t now = time(NULL);
-    strftime(fname, sizeof fname, "/%F-%H%M%S", localtime(&now));
+    strftime(dname, sizeof dname, "/%F-%H%M%S", localtime(&now));
 
-    mkdir(logDir.c_str(), ACCESSPERMS);
-    std::string pathLogDir = logDir + fname;
-    mkdir(pathLogDir.c_str(), ACCESSPERMS);
+    mkdir(parentPath.c_str(), ACCESSPERMS);
+    directory = parentPath + dname;
+    mkdir(directory.c_str(), ACCESSPERMS);
+}
 
+void ImageLogger::BackgroundLoop() {
     for (int i = 0; ! imagesToLog.quitting; ++i) {
         cv::Mat image = imagesToLog.Dequeue();
         if (! image.empty()) {
-            sprintf(fname, "%s/%04d.png", pathLogDir.c_str(), i);
+            char fname[100];
+            sprintf(fname, "%s/%04d.png", directory.c_str(), i);
             cv::imwrite(fname, image);
         }
     }

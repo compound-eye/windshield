@@ -7,7 +7,7 @@
 
 class ImageLogger {
 public:
-    ImageLogger(const std::string& path): logDir(path) {}
+    ImageLogger(const std::string& parentPath);
 
     Queue<cv::Mat,3> imagesToLog;
 
@@ -15,8 +15,9 @@ public:
     void Stop();
     void BackgroundLoop();
 
+    std::string directory;
+
 private:
-    std::string logDir;
     pthread_t thread;
 };
 

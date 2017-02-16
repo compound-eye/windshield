@@ -159,40 +159,43 @@ static void Cleanup() {
     glDeleteSync(rendering); rendering = 0;
 }
 
-static char* LatestRoverImages() {
-    char roverImagesDir[150];
-    sprintf(roverImagesDir, "%s/rover-images", getenv("HOME"));
-
+static std::string LatestRoverImageDirectory(const std::string& home) {
+    std::string roverImagesDir = home + "/rover-images";
     struct dirent** dirs = NULL;
-    const int countDirs = scandir(roverImagesDir, &dirs, NULL, alphasort);
-    static char fname[200];
-    sprintf(fname, "%s/%s/%%04d.png", roverImagesDir, dirs[countDirs-1]->d_name);
+    const int countDirs = scandir(roverImagesDir.c_str(), &dirs, NULL, alphasort);
+    std::string directory = roverImagesDir + '/' + dirs[countDirs-1]->d_name + '/';
 
     for (int i = 0; i < countDirs; ++i) {
         free(dirs[i]);
     }
     free(dirs);
 
-    return fname;
+    return directory;
 }
 
 static void Init(int& argc, char**argv) {
+    RoverParms parms;
+
+#if 0 // Play directly from the camera.
+    cap = new Capture(0);
+
+#else // Play from a directory of image files.
     std::string home = getenv("HOME");
 
-    // Uncomment one of these for capture lines to select the video source.
+    // Play from a specific directory.
+    //std::string directory = home + "/rover-images/2017-01-21-race/";
 
-    // Replay the latest image log from directory rover-images/
-    //cap = new Capture(LatestRoverImages(), cv::CAP_IMAGES);
+    // Play from the latest image log under ~/rover-images/
+    std::string directory = LatestRoverImageDirectory(home);
 
-    // Start the replay at the exact frame.
-    cap = new Capture(home + "/rover-images/2017-01-14-000650/0000.png", cv::CAP_IMAGES);
+    // Sequence of frames, starting from the frame number.
+    cap = new Capture(directory + "0000.png", cv::CAP_IMAGES);
 
-    // Display one single frame.
-    //cap = new Capture(home + "/rover-images/2017-01-21-race/0851.png", cv::CAP_FFMPEG);
+    // Single frame.
+    //cap = new Capture(directory + "0851.png", cv::CAP_FFMPEG);
 
-    // Display directly from the camera live.
-    //cap = new Capture(0);
-
+    parms.Read(directory + "/data.yml");
+#endif
 
     viewWidth  = cap->imageWidth;
     viewHeight = cap->imageHeight;
@@ -204,7 +207,7 @@ static void Init(int& argc, char**argv) {
     glewInit();
 
     view = new ImageView(cap->imageWidth, cap->imageHeight);
-    compute = new Compute(cap, NULL, true);
+    compute = new Compute(cap, NULL, parms.perspective, true);
 
     cap->Start();
     compute->Start();
