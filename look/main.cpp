@@ -194,7 +194,7 @@ static void Init(int& argc, char**argv) {
     // Single frame.
     //cap = new Capture(directory + "0851.png", cv::CAP_FFMPEG);
 
-    parms.Read(directory + "/data.yml");
+    parms.Read(directory + "data.yml");
 #endif
 
     viewWidth  = cap->imageWidth;
