@@ -7,7 +7,7 @@ int main(int argc, char* argv[]) {
     strcpy(srcfile, __FILE__);
     std::string dir(srcfile, strrchr(srcfile,'/')+1);
 
-    cv::Mat image = cv::imread(dir + "pic0.jpg");
+    cv::Mat image = cv::imread(dir + "pic3.jpg");
 
     cv::Size board(9, 6), dst(320, 240);
     double scale = double(image.size().width) / dst.width;
