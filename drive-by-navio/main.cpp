@@ -65,9 +65,9 @@ int main(int /*argc*/, char** /*argv*/) {
             float rightMotor = throttle;
             float steer      = data.angle * (20. - 5.*throttle) + 2.*rc.ReadSteer();
             if (steer < 0.) {
-                rightMotor *= 1. + std::max(-1.F, steer);
+                rightMotor *= 1. + std::max(-2.F, steer);
             } else {
-                leftMotor  *= 1. - std::min( 1.F, steer);
+                leftMotor  *= 1. - std::min( 2.F, steer);
             }
             motor.SetLeftMotor (leftMotor);
             motor.SetRightMotor(rightMotor);
