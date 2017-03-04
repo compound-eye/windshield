@@ -12,13 +12,13 @@ VideoSource::Command VideoSource::NextCommand(int& frameCount, Timer& timer) {
         switch (cmd) {
 
         case Play:
-        case Rewind:
             playing = true;
             frameCount = 0;
             timer.Start();
             break;
 
         case Pause:
+        case Rewind:
         case NextFrame:
         case PrevFrame:
             if (playing) {
