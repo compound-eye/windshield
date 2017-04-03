@@ -21,7 +21,7 @@ static bool byAngle(const LineInfo& v, const LineInfo& w) {
 
 void Compute::BackgroundLoop() {
     const int HoughThreshold = cap->imageWidth * cap->imageHeight / 6500;
-    const int minLineLength = cap->imageHeight / 3;
+    const int minLineLength = cap->imageHeight / 4;
     const double maxGap = 25;
     const double rho = 2., theta = 0.02;
 
@@ -36,6 +36,19 @@ void Compute::BackgroundLoop() {
         parms.Write(log->directory + "/data.yml");
     }
 
+    static double K[3*3] = {
+        2*122.2460543979631, 0, 2*79.82599847454172,
+        0, 2*122.7093282327254, 2*62.79411441679434,
+        0, 0, 1,
+    };
+    static double D[5] = {-0.4561153976709965, 0.2832957850680789, 0.0008219042752253125, 0.0006463450928625212, 0};
+    cv::Mat1d camera(3, 3, K), distortion(1, 5, D);
+
+    cv::Mat map1, map2;
+    cv::initUndistortRectifyMap(camera, distortion, cv::Mat(), camera,
+                                cv::Size(cap->imageWidth, cap->imageHeight), CV_16SC2,
+                                map1, map2);
+
     for (int i = 0; ! cap->imagesCaptured.quitting; ++i) {
         OutputData out;
         out.imageBefore = cap->imagesCaptured.Dequeue();
@@ -47,8 +60,8 @@ void Compute::BackgroundLoop() {
             }
 
 #if 1
-            const double CannyThreshold1 = 100.;
-            const double CannyThreshold2 = 130.;
+            const double CannyThreshold1 = 120.;
+            const double CannyThreshold2 = 150.;
 
             // Convert to grayscale.
             cv::cvtColor(out.imageBefore, bw, cv::COLOR_BGR2GRAY);
@@ -75,20 +88,22 @@ void Compute::BackgroundLoop() {
                 cv::mixChannels(&bw, 1, &out.imageAfter, 1, toGray, 3);
             }
 #endif
+            cv::remap(bw, bw, map1, map2, cv::INTER_LINEAR);
+            cv::rotate(bw, bw, cv::ROTATE_180);
             // Smooth it out.
             cv::blur(bw, bw, cv::Size(5,5));
             // Detect edges.
             cv::Canny(bw, bw, CannyThreshold1, CannyThreshold2);
             // Find line segments.
-            cv::HoughLinesP(bw.rowRange(0, 0.75*cap->imageHeight),
+            cv::HoughLinesP(bw.rowRange(0, 0.6*cap->imageHeight),
                             out.lines, rho, theta, HoughThreshold, minLineLength, maxGap);
 
             std::vector<LineInfo> lines;
             lines.reserve(out.lines.size());
             for (Lines::iterator pl = out.lines.begin(); pl != out.lines.end(); ++pl) {
                 cv::Vec4i& l = *pl;
-                pLine[0] = cv::Vec2d(l[0], l[1]);
-                pLine[1] = cv::Vec2d(l[2], l[3]);
+                pLine[0] = cv::Vec2f(l[0], l[1]);
+                pLine[1] = cv::Vec2f(l[2], l[3]);
 
                 // See the line from bird's-eye view.
                 if (! parms.perspective.empty()) {
@@ -149,13 +164,13 @@ void Compute::BackgroundLoop() {
 
             if (outputPic) {
                 // Uncomment one of the sections of the code to look at the images at various stages.
-#if 1
+#if 0
                 // Look at the image as captured.
                 out.imageAfter = out.imageBefore;
 #elif 0
                 // Look at the image from bird's-eye view.
                 cv::warpPerspective(out.imageBefore, out.imageAfter, H, out.imageBefore.size());
-#elif 0
+#elif 1
                 // Look at the edges in the image.
                 out.imageAfter.create(bw.rows, bw.cols, CV_8UC3);
                 cv::mixChannels(&bw, 1, &out.imageAfter, 1, toGray, 3);

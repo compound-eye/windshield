@@ -28,9 +28,9 @@ int main(int /*argc*/, char** /*argv*/) {
 
         // the matrix produced by birdeye program
         static double perspective[3*3] = {
-            0.5731389166897287,    -0.695945310018885,  68.84593479672694,
-           -0.01357387557820061,    0.710516853874569, -12.96266970744168,
-            0.0001011575411138086, -0.00447555738726872, 1,
+          -13.0972320847454,     -11.0517198370829,  1192.258959429555,
+           -0.5434199460096554,  -41.94412975108693, 2235.007965494075,
+            0.001304385048944511, -0.09685091292700615, 1,
         };
 
         // The program runs in four threads. This way, the computer always has something to
@@ -63,14 +63,14 @@ int main(int /*argc*/, char** /*argv*/) {
             float throttle   = rc.ReadThrottle();
             float leftMotor  = throttle;
             float rightMotor = throttle;
-            float steer      = data.angle * (20. - 5.*throttle) + 2.*rc.ReadSteer();
+            float steer      = data.angle * (15. - 5.*throttle) + 2.*rc.ReadSteer();
             if (steer < 0.) {
                 rightMotor *= 1. + std::max(-2.F, steer);
             } else {
                 leftMotor  *= 1. - std::min( 2.F, steer);
             }
-            motor.SetLeftMotor (leftMotor);
-            motor.SetRightMotor(rightMotor);
+            motor.SetLeftMotor (-leftMotor);
+            motor.SetRightMotor(-rightMotor);
 
             struct timespec sleep = {0, 1000 * timer.NextSleep(refreshRate, INT_MAX)};
             nanosleep(&sleep, NULL);
